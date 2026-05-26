@@ -624,6 +624,19 @@
     .summary-row span:last-child { color:var(--text);font-weight:700;font-family:'Courier Prime',monospace; }
     .summary-songs { margin-top:10px;max-height:150px;overflow-y:auto;font-size:.72rem;color:var(--text-muted);line-height:1.7; }
 
+    /* ── SEARCH UNIFIED ── */
+    .search-row { display:flex; gap:5px; align-items:center; }
+    .search-row input { flex:1; }
+    #global-search-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:5px; padding:5px 9px; font-size:.8rem; cursor:pointer; transition:all .18s; flex-shrink:0; }
+    #global-search-btn:hover, #global-search-btn.active { border-color:var(--gold-dark); color:var(--gold); background:rgba(201,168,76,.08); }
+
+    /* ── EXTERNAL SEARCH FOOTER ── */
+    #external-search { border-top:1px solid var(--border); padding:8px 12px; flex-shrink:0; }
+    #external-label { font-size:.6rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:5px; }
+    #external-btns { display:flex; gap:6px; }
+    .ext-btn { flex:1; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:5px; padding:5px 0; font-size:.72rem; font-weight:700; cursor:pointer; font-family:'Raleway',sans-serif; transition:all .18s; }
+    .ext-btn:hover { border-color:var(--gold-dark); color:var(--gold); }
+
     /* ── ONLINE PRESENCE ── */
     #online-count { font-size:.7rem; color:var(--gold-dark); font-weight:700; cursor:pointer; padding:2px 6px; border:1px solid var(--border); border-radius:5px; display:none; font-family:'Raleway',sans-serif; }
     #online-count.on { display:inline-block; }
@@ -709,19 +722,20 @@
 
   <div id="tab-rep" style="display:flex;flex-direction:column;overflow:hidden;flex:1;">
     <div id="search-box">
-      <input type="text" id="search-input" placeholder="🔍  Buscar por nome...">
-      <input type="text" id="key-filter" placeholder="🎵  Filtrar por tom (ex: Am, G, D)">
-      <button id="global-search-btn" onclick="toggleGlobalSearch()">🌐 Buscar nos 3 repertórios</button>
-      <div id="ai-panel">
-        <input type="text" id="ai-search-input" placeholder="🤖  Música fora do repertório...">
-        <div id="ai-search-btns">
-          <button class="ai-search-btn" onclick="openCifraClubSearch()">🎸 CifraClub</button>
-          <button class="ai-search-btn" onclick="openYouTubeSearch()">▶ YouTube</button>
-        </div>
+      <div class="search-row">
+        <input type="text" id="search-input" placeholder="🔍  Buscar música...">
+        <button id="global-search-btn" onclick="toggleGlobalSearch()" title="Buscar nos 3 repertórios">🌐</button>
       </div>
-      <button id="ai-toggle-btn" onclick="toggleAIPanel()" style="margin-top:4px">🤖 Buscar fora do repertório</button>
+      <input type="text" id="key-filter" placeholder="🎵  Tom (ex: Am, G, D)">
     </div>
     <div id="song-list"></div>
+    <div id="external-search">
+      <span id="external-label">Buscar fora do app:</span>
+      <div id="external-btns">
+        <button class="ext-btn" onclick="openCifraClubExt()">🎸 CifraClub</button>
+        <button class="ext-btn" onclick="openYouTubeExt()">▶ YouTube</button>
+      </div>
+    </div>
   </div>
 
   <div id="tab-set" style="display:none;flex-direction:column;overflow:hidden;flex:1;">
@@ -5496,40 +5510,31 @@ if (!userName) {
 /* ══════════════════════
    YOUTUBE / CIFRACLUB
    ══════════════════════ */
+/* ══════════════════════
+   BUSCA EXTERNA (usa música selecionada OU campo de busca)
+   ══════════════════════ */
+function getSearchQuery() {
+  if (selectedId !== null) {
+    const song = currentSongs.find(s=>s.id===selectedId);
+    return song.title + (getAuthor(song) ? ' ' + getAuthor(song) : '');
+  }
+  return document.getElementById('search-input').value.trim();
+}
 function openYouTube() {
-  if (selectedId===null) return notify('Selecione uma música primeiro');
-  const song = currentSongs.find(s=>s.id===selectedId);
-  const author = getAuthor(song);
-  window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song.title+(author?' '+author:'')+ ' samba')}`, '_blank');
+  const q = getSearchQuery();
+  if (!q) return notify('Selecione uma música ou digite um nome');
+  window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q+' samba')}`, '_blank');
 }
 function openCifraClub() {
-  if (selectedId===null) return notify('Selecione uma música primeiro');
-  const song = currentSongs.find(s=>s.id===selectedId);
-  const author = getAuthor(song);
-  const q = song.title + (author ? ' ' + author : '');
+  const q = getSearchQuery();
+  if (!q) return notify('Selecione uma música ou digite um nome');
   window.open(`https://www.google.com/search?q=site:cifraclub.com.br+${encodeURIComponent(q)}`, '_blank');
 }
+function openCifraClubExt() { openCifraClub(); }
+function openYouTubeExt()   { openYouTube();   }
 
-/* ══════════════════════
-   AI PANEL (fora do repertório)
-   ══════════════════════ */
-function toggleAIPanel() {
-  const panel = document.getElementById('ai-panel');
-  const btn   = document.getElementById('ai-toggle-btn');
-  const open  = panel.classList.toggle('open');
-  btn.textContent = open ? '🤖 Fechar busca IA ▲' : '🤖 Buscar fora do repertório';
-  if (open) setTimeout(()=>document.getElementById('ai-search-input').focus(), 100);
-}
-function openCifraClubSearch() {
-  const q = document.getElementById('ai-search-input').value.trim();
-  if (!q) return notify('Digite o nome da música');
-  window.open(`https://www.google.com/search?q=site:cifraclub.com.br+${encodeURIComponent(q)}`, '_blank');
-}
-function openYouTubeSearch() {
-  const q = document.getElementById('ai-search-input').value.trim();
-  if (!q) return notify('Digite o nome da música');
-  window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q+' samba cifra')}`, '_blank');
-}
+
+
 
 const authorData = {
   "O Bem":"Arlindo Cruz","Nos Braços da Batucada":"Arlindo Cruz",
