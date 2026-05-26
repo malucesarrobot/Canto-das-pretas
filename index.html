@@ -1,0 +1,6107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🖤 Canto das Pretas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0c0c;
+      --sidebar-bg: #111111;
+      --card-bg: #1a1a1a;
+      --gold: #C9A84C;
+      --gold-light: #E8D08A;
+      --gold-dark: #8B6914;
+      --text: #F0EBE0;
+      --text-muted: #7a7060;
+      --border: #242424;
+      --sidebar-width: 300px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Raleway', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+      transition: transform .3s ease;
+      z-index: 50;
+    }
+
+    #logo {
+      padding: 22px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #111 0%, #1a1409 100%);
+    }
+    #logo h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.35rem;
+      color: var(--gold);
+      letter-spacing: .02em;
+      line-height: 1.2;
+    }
+    #logo p {
+      font-size: .62rem;
+      color: var(--text-muted);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    #search-box { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    #search-input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 11px;
+      color: var(--text);
+      font-family: 'Raleway', sans-serif;
+      font-size: .82rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #search-input::placeholder { color: var(--text-muted); }
+    #search-input:focus { border-color: var(--gold-dark); }
+
+    #song-list { flex: 1; overflow-y: auto; padding: 4px 0 20px; }
+    #song-list::-webkit-scrollbar { width: 3px; }
+    #song-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .bloco-header {
+      padding: 14px 14px 5px;
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+    }
+    .bloco-header:first-child { border-top: none; margin-top: 0; }
+
+    .song-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background .12s, border-color .12s;
+    }
+    .song-item:hover { background: rgba(255,255,255,.03); }
+    .song-item.selected {
+      background: rgba(201,168,76,.08);
+      border-left-color: var(--gold-dark);
+    }
+    .song-item.live-song {
+      background: rgba(201,168,76,.15);
+      border-left-color: var(--gold);
+    }
+    .song-name {
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.3;
+      flex: 1;
+    }
+    .song-item.live-song .song-name { color: var(--gold-light); }
+    .song-key {
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--gold-dark);
+      background: rgba(201,168,76,.08);
+      border: 1px solid rgba(201,168,76,.12);
+      padding: 1px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+      margin-left: 8px;
+      font-family: 'Courier Prime', monospace;
+    }
+
+    /* ── MAIN ── */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+
+    #conn-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .72rem;
+      color: var(--text-muted);
+    }
+    #conn-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #444;
+      transition: background .4s;
+    }
+    #conn-dot.online  { background: #5cb85c; box-shadow: 0 0 6px #5cb85c66; }
+    #conn-dot.offline { background: #d9534f; }
+
+    #live-badge {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      background: rgba(201,168,76,.12);
+      border: 1px solid rgba(201,168,76,.25);
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    #live-badge.show { display: flex; }
+    #live-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: blink 1.3s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+    .topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 5px 11px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Raleway', sans-serif;
+      font-size: .78rem;
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+
+    .font-ctrl { display: flex; align-items: center; gap: 4px; }
+    .font-ctrl .btn { padding: 4px 9px; font-size: .8rem; }
+    .font-ctrl span { font-size: .72rem; color: var(--text-muted); }
+
+    #broadcast-btn {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #0c0c0c;
+      font-weight: 700;
+      padding: 7px 18px;
+      font-size: .8rem;
+      letter-spacing: .04em;
+    }
+    #broadcast-btn:hover:not(:disabled) {
+      background: var(--gold-light);
+      border-color: var(--gold-light);
+    }
+    #broadcast-btn:disabled {
+      background: var(--card-bg);
+      border-color: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    @keyframes pulse-gold {
+      0%   { box-shadow: 0 0 0 0 rgba(201,168,76,.5); }
+      70%  { box-shadow: 0 0 0 14px rgba(201,168,76,0); }
+      100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
+    }
+    .pulse { animation: pulse-gold .55s ease-out; }
+
+    /* ── CONTENT ── */
+    #content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 36px 44px 60px;
+      display: flex;
+      flex-direction: column;
+    }
+    #content-area::-webkit-scrollbar { width: 5px; }
+    #content-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Welcome */
+    #welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      opacity: .7;
+    }
+    #welcome .big-icon { font-size: 3.5rem; margin-bottom: 16px; }
+    #welcome h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    #welcome p { color: var(--text-muted); font-size: .9rem; line-height: 1.7; }
+
+    /* Song display */
+    #song-display { display: none; }
+    #song-display.on { display: block; }
+
+    #song-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    #song-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    #song-key-tag {
+      font-family: 'Courier Prime', monospace;
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(201,168,76,.08);
+      border: 1px solid rgba(201,168,76,.2);
+      padding: 3px 10px;
+      border-radius: 4px;
+    }
+    #song-bloco-tag {
+      font-size: .68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .divider {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
+    }
+    .divider-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold-dark), transparent);
+    }
+    .divider-gem { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
+
+    #song-content {
+      font-family: 'Courier Prime', monospace;
+      line-height: 1.85;
+      color: var(--text);
+      white-space: pre-wrap;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 26px 30px;
+      tab-size: 4;
+    }
+
+    /* Notification */
+    #notif {
+      position: fixed; bottom: 22px; right: 22px;
+      background: var(--gold); color: #0c0c0c;
+      padding: 11px 18px; border-radius: 8px;
+      font-weight: 700; font-size: .82rem;
+      opacity: 0; transform: translateY(8px);
+      transition: all .25s; pointer-events: none; z-index: 200;
+    }
+    #notif.show { opacity: 1; transform: translateY(0); }
+
+    /* Repertoire selector */
+    #rep-selector {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .rep-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Raleway', sans-serif;
+      font-size: .68rem;
+      font-weight: 600;
+      transition: all .18s;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rep-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+    .rep-btn.active {
+      background: rgba(201,168,76,.12);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Nav buttons */
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 5px 13px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all .18s;
+      line-height: 1;
+    }
+    .nav-btn:hover:not(:disabled) { border-color: var(--gold-dark); color: var(--gold); }
+    .nav-btn:disabled { opacity: .25; cursor: not-allowed; }
+
+    /* Key filter */
+    #key-filter {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 11px;
+      color: var(--text);
+      font-family: 'Courier Prime', monospace;
+      font-size: .8rem;
+      outline: none;
+      transition: border-color .2s;
+      margin-top: 5px;
+    }
+    #key-filter::placeholder { color: var(--text-muted); font-family: 'Raleway', sans-serif; }
+    #key-filter:focus { border-color: var(--gold-dark); }
+
+    /* Suggestion panel */
+    #suggestion-panel {
+      margin-top: 28px;
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      display: none;
+    }
+    #suggestion-panel.on { display: block; }
+    .sug-title {
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 10px;
+    }
+    .sug-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .sug-cards.three-cols { grid-template-columns: repeat(3, 1fr); }
+    .sug-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 10px;
+      cursor: pointer;
+      transition: border-color .18s, background .18s;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .sug-card:hover { border-color: var(--gold-dark); background: rgba(201,168,76,.05); }
+    .sug-label {
+      font-size: .55rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sug-name {
+      font-family: 'Playfair Display', serif;
+      font-size: .78rem;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 3px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .sug-meta {
+      font-size: .62rem;
+      color: var(--text-muted);
+      font-family: 'Courier Prime', monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 820px) {
+      .sug-cards { grid-template-columns: repeat(2, 1fr); }
+      .sug-cards.three-cols { grid-template-columns: repeat(3, 1fr); }
+    }
+
+
+    /* ── SIDEBAR TABS ── */
+    #sidebar-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .stab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 4px;
+      font-family: 'Raleway', sans-serif;
+      font-size: .65rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .18s;
+      letter-spacing: .05em;
+    }
+    .stab:hover { color: var(--gold); }
+    .stab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    #tab-setlist, #tab-historico { display: none; flex-direction: column; overflow: hidden; flex: 1; }
+    .tab-panel-active { display: flex !important; }
+    .tab-ctrl { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .tab-ctrl span { font-size: .7rem; color: var(--text-muted); }
+    .tab-ctrl-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 5px; padding: 3px 9px; font-size: .65rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all .18s; }
+    .tab-ctrl-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+    .tab-ctrl-btn.danger:hover { border-color: #c0392b; color: #e74c3c; }
+    #setlist-list, #history-list { overflow-y: auto; flex: 1; }
+    .setlist-item, .history-item { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; gap: 6px; transition: background .15s; }
+    .setlist-item:hover, .history-item:hover { background: rgba(255,255,255,.04); }
+    .si-num { font-size: .65rem; color: var(--gold-dark); min-width: 16px; font-family: 'Courier Prime', monospace; }
+    .si-title, .hi-title { font-size: .8rem; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .si-key, .hi-time { font-size: .65rem; color: var(--text-muted); font-family: 'Courier Prime', monospace; }
+    .si-rm { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: .75rem; transition: color .15s; }
+    .si-rm:hover { color: #e74c3c; }
+    .history-item.played-now { background: rgba(201,168,76,.07); }
+
+    /* ── SONG TOOLBAR ── */
+    #song-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .tool-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 5px; padding: 4px 10px; font-size: .72rem; cursor: pointer; transition: all .18s; font-family: 'Raleway', sans-serif; white-space: nowrap; font-weight: 700; }
+    .tool-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+    .tool-btn.active { background: rgba(201,168,76,.12); border-color: var(--gold); color: var(--gold); }
+    #fav-btn.fav-on { color: #f0c040; border-color: #f0c040; background: rgba(240,192,64,.1); }
+    #rehearsal-btns { display: flex; gap: 3px; }
+    .reh-btn { background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 4px 7px; cursor: pointer; font-size: .8rem; transition: all .18s; opacity: .45; font-weight: 700; }
+    .reh-btn:hover { opacity: 1; }
+    .reh-btn.reh-active { opacity: 1; border-color: var(--gold-dark); background: rgba(201,168,76,.1); }
+    #transpose-ctrl { display: flex; align-items: center; gap: 3px; }
+    #transpose-val { font-family: 'Courier Prime', monospace; font-size: .85rem; color: var(--gold); min-width: 26px; text-align: center; font-weight: 700; }
+    .tp-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 5px; padding: 4px 8px; font-size: .72rem; cursor: pointer; transition: all .18s; font-family: 'Raleway', sans-serif; font-weight: 700; }
+    .tp-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+    #setlist-add-btn { margin-left: auto; }
+
+    /* ── BADGES NA LISTA ── */
+    .song-badges { display: flex; gap: 3px; align-items: center; margin-left: 2px; }
+    .badge-fav { font-size: .68rem; color: #f0c040; line-height: 1; }
+    .badge-reh { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .badge-reh.ok { background: #2ecc71; }
+    .badge-reh.ensaiar { background: #f39c12; }
+    .badge-reh.nova { background: #e74c3c; }
+    .badge-hist { font-size: .58rem; color: var(--gold-dark); }
+
+    /* ── NOTES ── */
+    #notes-wrap { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 12px; }
+    #notes-toggle { background: transparent; border: none; color: var(--text-muted); font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; padding: 0; font-family: 'Raleway', sans-serif; }
+    #notes-toggle:hover { color: var(--gold); }
+    #notes-input { display: none; width: 100%; margin-top: 8px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-family: 'Raleway', sans-serif; font-size: .85rem; padding: 10px 12px; resize: vertical; min-height: 72px; outline: none; box-sizing: border-box; transition: border-color .2s; }
+    #notes-input:focus { border-color: var(--gold-dark); }
+    #notes-input.open { display: block; }
+    #notes-saving { font-size: .58rem; color: var(--text-muted); margin-left: 8px; }
+
+    /* ── REPEAT ALERT ── */
+    #repeat-alert { display: none; background: rgba(192,57,43,.12); border: 1px solid rgba(192,57,43,.35); border-radius: 6px; padding: 6px 12px; font-size: .75rem; color: #e74c3c; margin-bottom: 10px; }
+    #repeat-alert.show { display: block; }
+
+    /* ── SETLIST MODAL ── */
+    .modal-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center; }
+    .modal-box { background:#1e1710;border:1px solid var(--gold-dark);border-radius:12px;padding:24px;width:88%;max-width:360px; }
+    .modal-title { font-family:'Playfair Display',serif;color:var(--gold);font-size:1.1rem;margin-bottom:14px; }
+    .modal-input { width:100%;background:var(--card-bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Raleway',sans-serif;font-size:.9rem;padding:9px 12px;outline:none;box-sizing:border-box;margin-bottom:14px; }
+    .modal-input:focus { border-color:var(--gold-dark); }
+    .modal-btns { display:flex;gap:8px;justify-content:flex-end; }
+    .modal-btn { padding:7px 18px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-family:'Raleway',sans-serif;font-size:.8rem;font-weight:700;transition:all .18s; }
+    .modal-btn.primary { background:var(--gold-dark);color:#1a1410;border-color:var(--gold-dark); }
+    .modal-btn.primary:hover { background:var(--gold); }
+    .modal-btn.secondary { background:transparent;color:var(--text-muted); }
+    .modal-btn.secondary:hover { color:var(--text);border-color:var(--text-muted); }
+
+    /* ── SETLIST CARDS ── */
+    .sl-card { border:1px solid var(--border);border-radius:8px;margin:8px 12px;overflow:hidden;transition:border-color .18s; }
+    .sl-card.sl-active { border-color:var(--gold-dark); }
+    .sl-card-head { display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:transparent;transition:background .15s; }
+    .sl-card.sl-active .sl-card-head { background:rgba(201,168,76,.08); }
+    .sl-card-head:hover { background:rgba(255,255,255,.04); }
+    .sl-name { font-size:.82rem;color:var(--text);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .sl-date { font-size:.62rem;color:var(--gold-dark);font-family:'Courier Prime',monospace; }
+    .sl-count { font-size:.6rem;color:var(--text-muted); }
+    .sl-btns { display:flex;gap:3px;margin-left:auto; }
+    .sl-btn { background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:.65rem;font-weight:700;font-family:'Raleway',sans-serif;transition:all .18s; }
+    .sl-btn:hover { border-color:var(--gold-dark);color:var(--gold); }
+    .sl-btn.use-btn.using { border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1); }
+    .sl-items { border-top:1px solid var(--border);display:none; }
+    .sl-card.sl-expanded .sl-items { display:block; }
+    .sl-item { display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;gap:6px;transition:background .15s; }
+    .sl-item:hover { background:rgba(255,255,255,.04); }
+    .sl-item-num { font-size:.62rem;color:var(--gold-dark);min-width:16px;font-family:'Courier Prime',monospace; }
+    .sl-item-title { font-size:.78rem;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .sl-item-key { font-size:.62rem;color:var(--text-muted);font-family:'Courier Prime',monospace; }
+    .sl-item-rm { background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:.7rem;padding:0 2px;transition:color .15s; }
+    .sl-item-rm:hover { color:#e74c3c; }
+    .sl-item.sl-current { background:rgba(201,168,76,.08); }
+
+    /* ── SHOW TIMER ── */
+    #show-timer { font-family:'Courier Prime',monospace; font-size:.72rem; color:var(--gold); display:none; letter-spacing:.05em; font-weight:700; }
+    #show-timer.on { display:block; }
+
+    /* ── METRONOME ── */
+    #metro-wrap { display:flex; align-items:center; gap:5px; }
+    #metro-dot { width:9px; height:9px; background:var(--border); border-radius:50%; transition:transform .06s, background .06s; flex-shrink:0; }
+    #metro-dot.beat { transform:scale(2); background:var(--gold); }
+
+    /* ── AUTHOR TAG ── */
+    #song-author-tag { font-size:.68rem; color:var(--text-muted); font-style:italic; }
+
+    /* ── GLOBAL SEARCH ── */
+    #global-search-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:5px; padding:3px 8px; font-size:.7rem; cursor:pointer; font-family:'Raleway',sans-serif; font-weight:700; transition:all .18s; margin-top:5px; width:100%; }
+    #global-search-btn:hover, #global-search-btn.active { border-color:var(--gold-dark); color:var(--gold); background:rgba(201,168,76,.08); }
+    .global-result-rep { font-size:.6rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold-dark); padding:8px 14px 4px; }
+
+    /* ── AGENDA ── */
+    .agenda-event { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.04); cursor:default; }
+    .agenda-event:hover { background:rgba(255,255,255,.03); }
+    .ag-date { font-size:.65rem; color:var(--gold-dark); font-family:'Courier Prime',monospace; font-weight:700; margin-bottom:3px; }
+    .ag-title { font-size:.85rem; color:var(--text); font-weight:700; font-family:'Playfair Display',serif; margin-bottom:2px; }
+    .ag-location { font-size:.7rem; color:var(--text-muted); }
+    .ag-notes { font-size:.68rem; color:var(--text-muted); margin-top:3px; font-style:italic; line-height:1.4; }
+    .ag-rm { float:right; background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:.75rem; padding:0; transition:color .15s; }
+    .ag-rm:hover { color:#e74c3c; }
+    .ag-next { background:rgba(201,168,76,.08); border-left:3px solid var(--gold-dark); }
+
+    /* ── SHOW SUMMARY ── */
+    #summary-modal { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:9998;display:flex;align-items:center;justify-content:center; }
+    .summary-box { background:#1e1710;border:1px solid var(--gold-dark);border-radius:12px;padding:24px;width:88%;max-width:380px; }
+    .summary-title { font-family:'Playfair Display',serif;color:var(--gold);font-size:1.1rem;margin-bottom:16px; }
+    .summary-row { display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.82rem; }
+    .summary-row span:first-child { color:var(--text-muted); }
+    .summary-row span:last-child { color:var(--text);font-weight:700;font-family:'Courier Prime',monospace; }
+    .summary-songs { margin-top:10px;max-height:150px;overflow-y:auto;font-size:.72rem;color:var(--text-muted);line-height:1.7; }
+
+    /* ── ONLINE PRESENCE ── */
+    #online-count { font-size:.7rem; color:var(--gold-dark); font-weight:700; cursor:pointer; padding:2px 6px; border:1px solid var(--border); border-radius:5px; display:none; font-family:'Raleway',sans-serif; }
+    #online-count.on { display:inline-block; }
+
+    /* ── AI CIFRA ── */
+    #ai-panel { display:none; margin-top:6px; }
+    #ai-panel.open { display:block; }
+    #ai-search-input { width:100%; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:6px 11px; color:var(--text); font-family:'Raleway',sans-serif; font-size:.82rem; outline:none; box-sizing:border-box; margin-bottom:5px; }
+    #ai-search-input:focus { border-color:var(--gold-dark); }
+    #ai-search-btns { display:flex; gap:5px; }
+    .ai-search-btn { flex:1; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:5px; padding:5px 6px; font-size:.68rem; font-weight:700; cursor:pointer; font-family:'Raleway',sans-serif; transition:all .18s; }
+    .ai-search-btn:hover { border-color:var(--gold-dark); color:var(--gold); }
+    .ai-search-btn.primary { background:rgba(201,168,76,.12); border-color:var(--gold-dark); color:var(--gold); }
+    #ai-result-modal { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:9997;display:none;align-items:center;justify-content:center; }
+    #ai-result-modal.open { display:flex; }
+    .ai-result-box { background:#1a1208;border:1px solid var(--gold-dark);border-radius:12px;width:92%;max-width:500px;max-height:85vh;display:flex;flex-direction:column; }
+    .ai-result-head { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border); }
+    .ai-result-title { font-family:'Playfair Display',serif;color:var(--gold);font-size:1rem; }
+    .ai-result-close { background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem; }
+    #ai-result-content { flex:1;overflow-y:auto;padding:16px 18px; }
+    #ai-result-text { font-family:'Courier Prime',monospace;font-size:.82rem;color:var(--text);white-space:pre-wrap;line-height:1.7; }
+    .ai-result-foot { padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end; }
+
+    /* Sidebar toggle (mobile) */
+    #menu-btn {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    #overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.75); z-index: 40;
+    }
+    #overlay.show { display: block; }
+
+    @media (max-width: 820px) {
+      #sidebar {
+        position: fixed; top: 0; left: 0; height: 100vh;
+        transform: translateX(-100%);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #menu-btn { display: flex; }
+      #content-area { padding: 20px 16px 50px; }
+      #song-title { font-size: 1.6rem; }
+      #song-content { padding: 16px 14px; }
+      .topbar-right { gap: 6px; }
+      #broadcast-btn { padding: 6px 12px; }
+    }
+  </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00b7ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Canto das Pretas">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+
+<div id="overlay"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside id="sidebar">
+  <div id="logo">
+    <h1>🖤 Canto das Pretas</h1>
+    <p>Repertório · Consciência Negra 2025</p>
+  </div>
+  <div id="rep-selector">
+    <button class="rep-btn active" id="rep-btn-0" onclick="switchRepertoire(0)">🖤 Consciência Negra 2025</button>
+    <button class="rep-btn" id="rep-btn-1" onclick="switchRepertoire(1)">🎵 Repertório 2024</button>
+    <button class="rep-btn" id="rep-btn-2" onclick="switchRepertoire(2)">🆕 2025 Rev.</button>
+  </div>
+  <div id="sidebar-tabs">
+    <button class="stab active" id="stab-rep"    onclick="showTab('rep')">🎵 Rep.</button>
+    <button class="stab"        id="stab-set"    onclick="showTab('set')">📋 Setlist</button>
+    <button class="stab"        id="stab-hist"   onclick="showTab('hist')">🕐 Hist.</button>
+    <button class="stab"        id="stab-agenda" onclick="showTab('agenda')">📅 Agenda</button>
+  </div>
+
+  <div id="tab-rep" style="display:flex;flex-direction:column;overflow:hidden;flex:1;">
+    <div id="search-box">
+      <input type="text" id="search-input" placeholder="🔍  Buscar por nome...">
+      <input type="text" id="key-filter" placeholder="🎵  Filtrar por tom (ex: Am, G, D)">
+      <button id="global-search-btn" onclick="toggleGlobalSearch()">🌐 Buscar nos 3 repertórios</button>
+      <div id="ai-panel">
+        <input type="text" id="ai-search-input" placeholder="🤖  Música fora do repertório...">
+        <div id="ai-search-btns">
+          <button class="ai-search-btn" onclick="openCifraClubSearch()">🎸 CifraClub</button>
+          <button class="ai-search-btn" onclick="openYouTubeSearch()">▶ YouTube</button>
+        </div>
+      </div>
+      <button id="ai-toggle-btn" onclick="toggleAIPanel()" style="margin-top:4px">🤖 Buscar fora do repertório</button>
+    </div>
+    <div id="song-list"></div>
+  </div>
+
+  <div id="tab-set" style="display:none;flex-direction:column;overflow:hidden;flex:1;">
+    <div class="tab-ctrl">
+      <span id="setlist-count">Nenhum setlist</span>
+      <button class="tab-ctrl-btn" onclick="openNewSetlistModal()">＋ Novo</button>
+    </div>
+    <div id="setlist-list" style="overflow-y:auto;flex:1;padding-bottom:8px;"></div>
+  </div>
+
+  <div id="tab-hist" style="display:none;flex-direction:column;overflow:hidden;flex:1;">
+    <div class="tab-ctrl">
+      <span id="history-count">Nenhuma tocada</span>
+      <div style="display:flex;gap:5px">
+        <button class="tab-ctrl-btn" onclick="showSummary()">📊</button>
+        <button class="tab-ctrl-btn" onclick="newShow()">🎪 Novo show</button>
+        <button class="tab-ctrl-btn danger" onclick="clearHistory()">🗑️</button>
+      </div>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <div id="tab-agenda" style="display:none;flex-direction:column;overflow:hidden;flex:1;">
+    <div class="tab-ctrl">
+      <span id="agenda-count">Sem eventos</span>
+      <button class="tab-ctrl-btn" onclick="openAgendaModal()">＋ Evento</button>
+    </div>
+    <div id="agenda-list" style="overflow-y:auto;flex:1;"></div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main id="main">
+  <div id="topbar">
+    <div class="topbar-left">
+      <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div id="conn-status">
+        <div id="conn-dot"></div>
+        <span id="conn-text">Conectando...</span>
+      </div>
+      <div id="live-badge"><div id="live-dot"></div>AO VIVO</div>
+      <span id="show-timer"></span>
+      <span id="online-count" title="Online agora" onclick="showOnlineList()"></span>
+      <button class="nav-btn" id="btn-prev" onclick="navSong(-1)" disabled title="Música anterior">◀</button>
+      <button class="nav-btn" id="btn-next" onclick="navSong(1)"  disabled title="Próxima música">▶</button>
+    </div>
+    <div class="topbar-right">
+      <div class="font-ctrl">
+        <span style="font-size:.8rem">A</span>
+        <button class="btn" onclick="changeFont(-.15)">−</button>
+        <button class="btn" onclick="changeFont(.15)">+</button>
+        <span style="font-size:1.05rem">A</span>
+      </div>
+      <button class="btn" onclick="goFullscreen()" title="Tela cheia">⛶</button>
+      <button class="btn" id="broadcast-btn" disabled onclick="broadcast()">
+        📡 EXIBIR PARA TODOS
+      </button>
+    </div>
+  </div>
+
+  <div id="content-area">
+    <div id="welcome">
+      <div class="big-icon">🖤</div>
+      <h2>Canto das Pretas</h2>
+      <p>Selecione uma música no menu lateral.<br>
+         Quando estiver pronta, clique em <strong style="color:var(--gold)">EXIBIR PARA TODOS</strong>.</p>
+    </div>
+
+    <div id="song-display">
+      <h2 id="song-title"></h2>
+      <div id="song-meta">
+        <span id="song-key-tag"></span>
+        <span id="song-bloco-tag"></span>
+        <span id="song-author-tag"></span>
+      </div>
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-gem"></div>
+        <div class="divider-line"></div>
+      </div>
+      <div id="repeat-alert">⚠️ Essa música já foi tocada hoje!</div>
+
+      <div id="song-toolbar">
+        <button class="tool-btn" id="fav-btn"       onclick="toggleFavorite()" title="Favoritar">☆ Fav</button>
+        <div id="rehearsal-btns" title="Status de ensaio">
+          <button class="reh-btn" id="reh-ok"      onclick="setRehearsal('ok')"      title="Bem ensaiado">🟢</button>
+          <button class="reh-btn" id="reh-ensaiar" onclick="setRehearsal('ensaiar')" title="Precisa ensaiar">🟡</button>
+          <button class="reh-btn" id="reh-nova"    onclick="setRehearsal('nova')"    title="Música nova">🔴</button>
+        </div>
+        <div id="transpose-ctrl">
+          <button class="tp-btn" onclick="transpose(-1)">♭−1</button>
+          <span id="transpose-val">±0</span>
+          <button class="tp-btn" onclick="transpose(1)">♯+1</button>
+          <button class="tp-btn" onclick="transpose(0)" title="Resetar">↺</button>
+        </div>
+        <div id="metro-wrap">
+          <button class="tool-btn" id="metro-btn" onclick="toggleMetronome()" title="Metrônomo visual">♩ Metro</button>
+          <div id="metro-dot"></div>
+        </div>
+        <button class="tool-btn" id="tele-btn" onclick="toggleTeleprompter()" title="Auto-scroll">▶ Auto</button>
+        <button class="tool-btn" onclick="openYouTube()" title="Buscar no YouTube">▶ YT</button>
+        <button class="tool-btn" onclick="openCifraClub()" title="Buscar no CifraClub">🎸 Cifra</button>
+        <button class="tool-btn" id="setlist-add-btn" onclick="addToSetlist()">📋 Setlist</button>
+      </div>
+
+      <pre id="song-content"></pre>
+
+      <div id="suggestion-panel">
+        <div class="sug-title">💡 Sugestões de próxima música</div>
+        <div class="sug-cards" id="sug-cards"></div>
+      </div>
+
+      <div id="notes-wrap">
+        <button id="notes-toggle" onclick="toggleNotes()">✏️ Anotações compartilhadas <span id="notes-saving"></span></button>
+        <textarea id="notes-input" placeholder="Anotações para toda a banda sobre essa música..."></textarea>
+      </div>
+    </div><!-- /song-display -->
+  </div><!-- /content-area -->
+</main>
+
+<div id="notif"></div>
+
+<!-- Modal: nome do músico (primeira abertura) -->
+<div id="name-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">🖤 Bem-vinda ao Canto das Pretas</div>
+    <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:14px;line-height:1.5">Como quer ser identificada para o grupo?</p>
+    <input type="text" id="name-input" class="modal-input" placeholder="Seu nome ou instrumento (ex: Malu, Violão)">
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="saveName()">Entrar 🖤</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: resultado da cifra IA -->
+<div id="ai-result-modal">
+  <div class="ai-result-box">
+    <div class="ai-result-head">
+      <span class="ai-result-title" id="ai-result-title">Cifra gerada</span>
+      <button class="ai-result-close" onclick="document.getElementById('ai-result-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="ai-result-content">
+      <pre id="ai-result-text"></pre>
+    </div>
+    <div class="ai-result-foot">
+      <button class="modal-btn secondary" onclick="document.getElementById('ai-result-modal').classList.remove('open')">Fechar</button>
+    </div>
+  </div>
+</div>
+<div id="modal-setlist" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title-text">🎵 Novo Setlist</div>
+    <input type="text" id="modal-input" class="modal-input" placeholder="Nome do show">
+    <div id="modal-extra" style="display:none">
+      <input type="text" id="modal-input2" class="modal-input" placeholder="Local (opcional)">
+      <textarea id="modal-input3" class="modal-input" placeholder="Observações (opcional)" rows="2" style="resize:none;"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="cancelModal()">Cancelar</button>
+      <button class="modal-btn primary" onclick="confirmModal()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Show Summary -->
+<div id="summary-modal" style="display:none" onclick="this.style.display='none'">
+  <div class="summary-box" onclick="event.stopPropagation()">
+    <div class="summary-title">📊 Resumo do Show</div>
+    <div id="summary-content"></div>
+    <div style="text-align:right;margin-top:16px">
+      <button class="modal-btn primary" onclick="document.getElementById('summary-modal').style.display='none'">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FIREBASE ═══ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+/* ══════════════════════════════════════════
+   🎵 REPERTÓRIO COMPLETO — CANTO DAS PRETAS
+   ══════════════════════════════════════════ */
+const songs = [
+
+/* ── BLOCO 1 ── */
+{ id:0, bloco:1, title:"O Bem", key:"Bm", content:
+`Bm7/9  Em7     A7/4/9
+O bem, ilumina o sorriso
+D6/9                 F#7(b13)
+Também pode dar proteção
+Bm7/9           Em7/9
+O bem é o verdadeiro amigo
+        A7/4/9
+É quem dá o abrigo
+    A7        D6/9
+É quem estende a mão
+
+B7sus4 B7(b13)             Em7/9
+No mundo de armadilhas e pecados
+              A7/13         D6/9
+Armado, tão carente de amor...
+B7/4   B7(b13)            Em7/9
+Às vezes é bem mais valorizado
+F#m7         G7M   A7/13
+Amado, endeusado quem é traidor...
+
+(F# G G# A G# G F#)     D7
+E o bem é pra acabar com desamor
+G7M
+Se a luz do sol não para de brilhar
+A/G
+Se ainda existe noite e luar
+F#m7
+O mal não pode superar...
+
+Fº    Abº    Am7    C/D
+Quem tem fé pra rezar diz amém
+G7M
+E ver que todo mundo é capaz.
+D9/F#     Em     G/A
+De ter um mundo só de amor e paz
+D6/9    A/C#   C6    C/D
+Quando faz só bem, quando só faz o bem`},
+
+{ id:1, bloco:1, title:"Nos Braços da Batucada", key:"Bm", content:
+`Bm7(5-)  E7(5+)   Am7
+Noites a fio sem te vê
+       Em7(5-)  A7
+Meu desafio foi viver
+       Dm7(9)   Dm/C
+Saudade
+
+Bm7(5-)  E7      Am7
+Agora chega de sofrer
+       Em7(5-)  A7
+Eu nada fiz pra merecer
+       Dm7(9)   Gm7   C7(9)
+Maldade
+
+F7M       Em7    Dm7
+Foi quando um amigo lembrou
+Gm7      C7       F7M
+Que o samba não pode parar, não
+Em7          Am7(9)
+Não é como um caso de amor que acaba
+F7M       Em7    Dm7
+Se eu perco no jogo do amor
+Gm7      C7       F7M
+O samba é meu protetor sim
+Em7       Am7(9)   Dm7   G7
+Me tira do trauma da dor, da mágoa
+
+[Refrão]
+C6(9)
+Cansei de esperar por você
+Am7
+Achei o prazer de sonhar
+Dm7              Dm/C
+Não tenho mais tempo a perder
+F/G   G7
+Não tenho mais medo de nada
+Gm7     C7
+Que bom ver o dia nascer
+F#m7(5-)   Fm6
+Que bom ver o sol despertar
+C/E  Ebº  Dm7  G7  C6(9)
+Nos braços da batucada`},
+
+{ id:2, bloco:1, title:"Retalhos de Cetim", key:"Am", content:
+`[Intro] Am
+
+Am7          Em7
+Ensaiei meu samba o ano inteiro
+Am7          Em7
+Comprei surdo e tamborim
+Am7         C7M
+Gastei tudo em fantasia
+F7M
+Era só o que eu queria
+F#º       E7
+E ela jurou desfilar pra mim
+
+Am7          Em7
+Minha escola estava tão bonita
+Am7          Em7
+Era tudo o que eu queria ver
+Am7         C7M
+Em retalhos de cetim
+F7M
+Eu dormi o ano inteiro
+F#º       E7
+E ela jurou desfilar pra mim
+
+A7M       E/G#    Em/G   F#7
+Mas chegou... o carnaval
+Bm7       F7    E7
+E ela não... desfilou
+
+Am7     C/G    F7M
+Eu chorei na avenida, eu chorei
+Dm
+Não pensei que mentia
+E7       Am      E7
+A cabrocha, que eu tanto amei
+
+PASSAGEM: E7 | Am | A7`},
+
+{ id:3, bloco:1, title:"Madureira", key:"Am", content:
+`— Meu Lugar  ·  Arlindo Cruz —
+
+Am7      D7
+O meu lugar é caminho de Ogum e Iansã
+    Dm7          G7
+Lá tem samba até de manhã
+    C            E7
+Uma ginga em cada andar
+Am7
+O meu lugar
+        D7
+É cercado de luta e suor
+       Dm7        G7
+Esperança num mundo melhor
+       C      C7
+E cerveja pra comemorar
+
+Fm7
+O meu lugar tem seus mitos
+       C      Am7
+E seres de luz
+    D7
+É bem perto de Osvaldo Cruz, Cascadura
+       E7
+Vaz Lobo e Irajá
+
+Am7       D7
+O meu lugar é sorriso, é paz e prazer
+      Dm7     G7
+O seu nome é doce dizer
+
+[Refrão]
+ C    A7    Dm7    G7
+Madureira, lá laiá
+ C    A7    Dm7    E7
+Madureira, lá laiá
+
+Am7
+Ah, que lugar!
+       Em7
+A saudade me faz relembrar
+       Bm7      E7
+Os amores que eu tive por lá
+       Am7    E7
+É difícil esquecer`},
+
+{ id:4, bloco:1, title:"Já É", key:"Gm", content:
+`G7M
+Não sei como aconteceu
+A/G
+Dava tudo pra saber
+F#m7
+Onde você se escondeu
+Am7     D7
+Tô pensando em te escrever
+
+G7M
+Uma carta de amor
+A/G
+Em forma de um coração
+F#m7
+Ou quem sabe lhe dizer
+Am7     D7
+Que a nossa união
+
+ G7M     A/G      F#m7
+Foi linda... pra gente acabar assim... ainda
+ Am7    D7    G7M    A/G
+Se dependesse de mim, linda...
+ F#m7       Am7    D7
+Acabar assim, ainda
+
+G7M
+Pra onde você for
+A/G
+Lá pra mim já é
+F#m7(5-)
+Irei
+     B7
+Se você quiser
+Em7      F#m7
+A saudade é dor
+G7M
+Volta meu amor
+A7      Am7    D7
+Assim que você puder`},
+
+{ id:5, bloco:1, title:"Moleque Atrevido", key:"E", content:
+`Tom: A
+
+E6/9
+Quem foi que falou
+B7          E6/9
+Que eu não sou um moleque atrevido
+Dm6
+Ganhei minha fama de bamba
+F#7       F#7/13
+No samba de roda
+F#m      B7
+Fico feliz em saber
+E
+O que fiz pela música
+D7    C#7
+Faça favor
+F#m      B7
+Respeite quem pode chegar
+E       B7/9-
+Onde a gente chegou
+
+E6/9
+Também somos linha de frente
+B7          E6/9
+De toda essa história
+Dm6
+Nós somos do tempo do samba
+F#7       F#7/13
+Sem grana, sem glória
+F#m      B7
+Não se discute talento
+E
+Nem seu argumento
+D7    C#7
+Me faça o favor
+F#m      B7
+Respeite quem pode chegar
+E6/9
+Onde a gente chegou
+
+B7
+E a gente chegou muito bem
+E6/9
+Sem a desmerecer a ninguém
+B7
+Enfrentando no peito um certo preconceito
+E6/9
+E muito desdém
+
+B7
+Hoje em dia é fácil dizer
+E6/9
+Essa música é nossa raiz
+B7
+Tá chovendo de gente que fala de samba
+Bm     E7
+E não sabe o que diz
+
+A        F#7
+Por isso vê lá onde pisa
+E    D7    C#7
+Respeite a camisa que a gente suou
+F#m    B7    Bm    E7
+Respeite quem pode chegar onde a gente chegou`},
+
+{ id:6, bloco:1, title:"Identidade", key:"Em", content:
+`[Intro] Em B7 Em B7
+
+Em        Bm       Em
+Elevador é quase um templo
+C             G
+Exemplo pra minar teu sono
+F#
+Sai desse compromisso
+F
+Não vai no de serviço
+
+Em        Bm       Em
+Se o social tem dono não vai
+Bm             Em
+Quem cede a vez não quer vitória
+C             G
+Somos herança da memória
+F#       F
+Temos a cor da noite, filhos de todo açoite
+Em        Bm       Em
+Fato real da nossa história
+
+Em     C       G
+Se preto de alma branca pra você
+A      C       Em
+É o exemplo da dignidade
+C           G
+Não nos ajuda só nos faz sofrer
+A      C       Em
+Nem resgata nossa identidade`},
+
+/* ── BLOCO 2 ── */
+{ id:7, bloco:2, title:"Partido Alto", key:"G", content:
+`G     C     G     C
+Diz que deu, diz que dá, diz que Deus
+G     C     G     C
+Dará, não vou duvidar, ô nega
+G     C     B7
+E se Deus não dá, como é que vai ficar,
+Em    C     G
+Ô nega?, Deus dará, Deus dará
+
+G
+Deus é um cara gozador, adora brincadeira
+Dm7         G7
+Pois prá me jogar no mundo, tinha o
+C
+Mundo inteiro
+C#          G
+Mas achou muito engraçado me botar cabreiro
+Em     Am    D
+Na barriga da miséria nasci batuqueiro
+G
+Eu sou do Rio de Janeiro
+
+G
+Jesus Cristo ainda me paga, um dia ainda me explica
+Dm7         G7      C
+Como é que pôs no mundo essa pobre coisica
+C#          G
+Vou correr o mundo afora, dar uma canjica
+Em     Am    D
+Que prá ver se alguém me amarra ao ronco da cuíca
+G
+E aquele abraço prá quem fica
+
+G
+Deus me deu mão de veludo prá fazer carícia
+Dm7          G7      C
+Deus me deu muita saudade e muita preguiça
+C#          G
+Deus me deu perna cumprida e muita malícia
+Em     Am    D
+Prá correr atrás da bola e fugir da polícia
+G
+Um dia ainda sou notícia
+
+G
+Deus me fez um cara fraco, desdentado e feio
+Dm7          G7      C
+Pele e osso simplesmente, quase sem recheio
+C#          G
+Mas se alguém me desafia e bota a mãe no meio
+Em     Am
+Dou paulada a três por quatro e nem me
+D        G
+Despenteio, que eu já tô de saco cheio`},
+
+{ id:8, bloco:2, title:"Cabide", key:"G", content:
+`G       F#º     Em7
+E se eu fingir e sair por aí na noitada, me
+Am7      D7
+Acabando de rir
+G       F#º
+E se eu disser que não digo, e não ligo, e que
+Em7      Am7    D7
+Fico e que só vou aprontar
+
+Am7      D7     Bm7
+É que eu sambo direitinho, assim bem miudinho,
+E7
+Cê não sabe acompanhar
+Am7   A#º     Bm7
+Vou arrancar sua saia e pôr no meu cabide só pra
+E7
+Pendurar
+Am7      D7      G
+Quero ver se você tem atitude e se vai encarar
+
+G       F#º     Em7
+E se eu sumir dos lugares, dos bares, esquinas e
+Am7      D7
+Ninguém me encontrar
+G       F#º     Em7
+E se me virem sambando até de madrugada e você
+Am7      E7
+For até lá
+
+Am7      D7     Bm7
+É que eu sambo direitinho assim bem miudinho, cê
+E7
+Não sabe acompanhar
+Am7   A#º     Bm7
+Vou arrancar sua blusa e pôr no meu cabide só pra
+E7
+Pendurar
+Am7      D7      G
+Quero ver se você tem atitude e se vai encarar
+
+E7
+Chega de fazer fumaça, de contar vantagem
+Am7      D7
+Quero ver chegar junto pra me juntar.
+G
+Me fazer sentir mais viva.
+E7       Am7    D7
+Me apertar o corpo e a alma me fazendo suar.
+Am7   A#º     Bm7
+Quero beijos sem tréguas, quero sete mil léguas
+E7
+Sem descansar
+Am7      D7      G
+Quero ver se você tem atitude e se vai encarar`},
+
+{ id:9, bloco:2, title:"Quando a Gira Girou", key:"G", content:
+`G    Am7    G    G7    C    G
+O céu de repente anuviou...
+
+D       D#º     Em
+E o que o temporal levou...
+Foi tudo que deu pra guardar
+
+A7     D7     G    Am7    G    G7
+Só Deus sabe o quanto se labutou...
+Custou mas depois veio a bonança...
+
+C         G      D       D#º
+E agora é hora de agradecer...
+Pois quando tudo se perdeu
+Em      Am7    D7    G
+E a sorte desapareceu...
+Abaixo de Deus só ficou você
+
+D       D#º     Em
+Quando a gira girou ninguém suportou
+A7      D7
+Só você ficou, não me abandonou
+
+D       D#º     Em
+Quando o vento parou e a água baixou
+A7      D7      G
+Eu tive a certeza do seu amor
+
+TERMINA EM G (Sol)`},
+
+{ id:10, bloco:2, title:"Alma Boêmia", key:"G", content:
+`G     C      G
+Amor me perdoa se às vezes eu surto
+D7    G     Em     F     D7
+Tirando essas ondas que eu curto
+E não lembro de volta
+
+Am     Am(#5)    Am6
+Você sabe bem, minha doce alma gêmea
+Am7       D7       G      D7
+Quem tem a alma boêmia, não consegue segurar, segurar
+
+G     C      G
+É que o samba pega que nem feitiço
+C     G    G7     C     E7
+E quando me pega eu enguiço, só saio quando acabar
+
+Am     F7     Bm
+Eu vou pra Gamboa e de lá vou pra Lapa
+E7     Am     D7    G    G7
+Ai o bom senso me escapa, amor eu não sei como evitar
+
+C     F7     Bm
+Eu subo a colina e pra minha surpresa
+E7     Am     D7    G
+Alguém diz em Santa Tereza, que o dia já vai clarear
+
+D7    G    C    G
+Morro dos Prazeres, que você me dá
+C     G     A7    F    D7
+Quando eu não sair de marola, eu vou te levar
+
+G     C      G
+Você dorme cedo e eu só vou deitar
+C     G    D7     G-G7
+Quando der o tom da viola, pro galo cantar`},
+
+{ id:11, bloco:2, title:"Só Depois", key:"Cm", content:
+`— Que na vida o hoje —
+
+Bbm7
+Que na vida o hoje
+Eb7      Ab7M
+Tem que aproveitar porque
+Dm7(5-)    G7    Cm
+Eu não sei se o amanhã há de chegar
+
+Bbm7
+Se me desse ao menos um sinal
+Eb7
+Um piscar de olhos
+Ab7M
+Um sorriso, eu posso garantir
+Dm7(5-)    G7    Cm
+Que o nosso caso ia ser fatal`},
+
+{ id:12, bloco:2, title:"Deixa Acontecer", key:"Bb", content:
+`D7    G7M    F#7    Bm
+Deixa acontecer naturalmente
+D7    G7M    F#7    Bm   Bbm   Am
+Eu não quero ver você chorar
+D7    G7M    F#7    Bm
+Deixa que o amor encontre a gente
+D7    C#m7(b5)    F#7    Bm
+Nosso caso vai eternizar
+
+D7M
+Você já disse que me quer
+F#m7
+Pra toda a vida, eternidade
+Em    A
+Quando está distante de mim
+Em    F#m7    G7M    A7
+Fica louca de saudade
+
+D6         F#m7
+Que é a razão do seu viver sou eu
+Em          Em/D
+Está tudo bem, eu acredito
+C#m7(b5)    F#7
+Eu não tô duvidando disso
+Bm
+Só que eu tenho muito medo
+F#m7
+De me apaixonar
+Em     F#7    Bm
+Esse filme já passou na minha vida
+A4(7)    A7    D6
+E você tá me ajudando a superar
+
+[Refrão]
+D7    G7M    F#7    Bm
+Deixa acontecer naturalmente
+D7    G7M    F#7    Bm   Bbm   Am
+Eu não quero ver você chorar
+D7    G7M    F#7    Bm
+Deixa que o amor encontre a gente
+D7    C#m7(b5)    F#7    Bm   G-G7
+Nosso caso vai eternizar`},
+
+{ id:13, bloco:2, title:"Deixa Alagar", key:"Gm", content:
+`Intro: Gm C7 Gm C7
+
+Gm
+Tô sofrendo de amor,
+Fm      Bb7
+Mas dizendo a verdade
+Eb
+E agora que eu sou
+Cm     D7     Gm
+Merecedor da tua fidelidade
+
+Mas pra ser a mulher
+Fm
+Mais feliz desse mundo
+Eb
+Basta acreditar,
+Cm     D7
+Meu sentimento é profundo
+
+Gm
+Vai ver
+Fm
+Que a razão de viver,
+Bb7     Gm
+Tá focada em você,
+Am     Ab7
+Meu coração é todo seu
+
+Gm
+E quando a gente quer
+Fm     Bb7
+Basta dizer sim
+Eb
+Então volta pra mim,
+Cm
+Que eu tô querendo saciar
+D7
+Essa vontade louca
+
+Gm
+Lembro da gente
+Fm
+Se amando embaixo do chuveiro
+Bb7
+Vendo o banheiro inundar
+
+Eb    Cm    D7
+Deixa alagar! Deixa alagar! Deixa alagar!
+
+Gm      Fm
+E namorando na cozinha com o feijão no fogo
+D7
+A ponto de nos incendiar
+Eb      Cm     D7
+Deixa queimar! Deixa queimar! Deixa queimar!`},
+
+/* ── BLOCO 3 ── */
+{ id:14, bloco:3, title:"Não Deixa o Samba Morrer", key:"Am", content:
+`Am7
+Quando eu não puder pisar
+     Dm
+Mais na avenida
+     E7
+Quando as minhas pernas
+     Am7
+Não puderem aguentar
+     Dm     G7
+Levar meu corpo
+     C
+Junto com meu samba
+F    E7
+O meu anel de bamba
+     Am7
+Entrego a quem mereça usar
+
+     Dm     G7      C
+Eu vou ficar no meio do povo espiando
+Em7      Dm
+Minha escola perdendo ou ganhando
+G7       C     A7
+Mais um carnaval
+
+Dm      G7
+Antes de me despedir
+C        Am7
+Deixo ao sambista mais novo
+F    E7    Am
+O meu pedido final
+
+Am7     Dm
+Não deixe o samba morrer
+E7      Am7
+Não deixe o samba acabar
+     Dm
+O morro foi feito de samba
+     E7     Am7
+De samba pra gente sambar`},
+
+{ id:15, bloco:3, title:"Você Me Vira a Cabeça", key:"F#m", content:
+`— Alcione  ·  Tom: F#m —
+
+[Intro] F#m7 E7 D7M F#m
+
+F#m7           C#(13-)
+Você me vira a cabeça
+F#m7           C#/E
+Me tira do sério
+Bm7
+Destrói os planos
+E4    E
+Que um dia eu fiz pra mim
+
+A7M
+Me faz pensar
+D7M
+Por que que a vida é assim
+G#m7(5-)    C#7
+Eu sempre vou e volto pros seus braços
+
+F#m7           C#7
+Você não me quer de verdade
+F#m7           C#4(13-)
+No fundo eu sou tua vaidade
+Bm7    E7(9/5-)    E7(9)
+Eu vivo seguindo os teus passos
+
+A7M(9)    D7M
+Eu sempre estou presa em teus laços
+G#m7(5-)    C#7    F#m7
+É só você chamar, que eu vou
+
+D7M    A/C#    Bm7
+Por quê você não vai embora de vez?
+D7M    A/C#    Bm7
+Por quê não me liberta dessa paixão?
+C#7
+Por quê?
+D7M    A/C#    Bm7
+Por quê você não diz que não me quer mais
+D7M       C#7
+Por quê não deixa livre o meu coração
+
+[Refrão]
+F#m7
+Mas tem que me prender, tem que seduzir
+Bm7
+Só pra me deixar louca por você
+G#m7(5-)
+Só pra ter alguém
+C#7
+Que vive sempre ao seu dispor
+F#m7    C#7
+Por um segundo de amor`},
+
+{ id:16, bloco:3, title:"Sem Ataque e Sem Defesa", key:"D", content:
+`D7M     C#m7(5-)
+Veja só
+     F#7    Bm    Em7
+O nosso amor não deu em nada
+     A7    D7M    C#m7(5-)
+E foram tantas madrugadas
+     F#7    Bm    G#m7(5-)
+Não cabia tanto amor pra dar
+     C#7    F#m
+Foi além da conta te gostar
+
+A7    D7M    C#m7(5-)
+Sabe Deus o quanto me valeu
+     F#7    Bm    Em7
+Seguir sozinha nesta estrada
+     A7    D7M    Am7
+Quase perdi o meu caminho
+     D7(9)    G7M    G6
+Nossa luz foi apagada
+
+     C7(9)    F7M
+Quem sabe um dia a gente possa se entender
+     Gm    A7    Am7    D7(9)
+Se a poesia da paixão reacender
+     Gm    C7(9)    F7M
+Nunca se sabe do amanhã o que será
+Gm    A7    D    Am
+Nunca é tarde pra recomeçar
+
+     D7(9)    G7M    G6    Gm7
+Você foi carta marcada
+     C7(9)    F7M
+Descartou minha jogada
+     G#º    A#7    A7    D
+Me fez aprender... jogar e perder no amor
+
+     D7    G7M    G6    Gm7
+Me pegou bem de surpresa
+     C7(9)    F7M
+Sem ataque e sem defesa
+     G#º    A7    D
+Só sei que você marcou`},
+
+{ id:17, bloco:3, title:"Pedaço de Ilusão", key:"E", content:
+`— Beth Carvalho  ·  Tom: C —
+
+[Intro] E B7
+
+     E       B/D#
+Ai desse amor que é só meu
+E/D    A/C#    A    G#7
+Nem a lua no céu, há de me ver sorrir
+E7    A    A#º    E/B
+Se der pra dividir, deixa um pouco pra mim
+C#7    F#7    B7    B7(13-)
+Que eu nunca mais direi, que vida quis assim
+
+Em    B/D#    E/D
+E juro que vou guardar, dentro do coração
+E7      Am     C/G
+Os segredos da paixão
+F#m7(5-)    B7    Em
+Basta um sorriso ou um aceno
+     G/D    F#7
+Um abraço e teu veneno
+     C6    B7
+Meu pedaço de ilusão
+
+Em    B/D#
+Nem vou me desesperar
+     E/D    E7    Am    C/G
+Se você vem de lá, maltratado pela dor
+F#m7(5-)    B7    Em
+Venha, meu pecado pouco importa
+     G/B    C7    B7    E
+Quero e mais sentir o teu calor
+     B7
+Vem, amor`},
+
+{ id:18, bloco:3, title:"Alguém Me Avisou", key:"A", content:
+`Introdução: A / D7 / A / E7 / A / D7 / A / E7
+
+A    E7    A
+Foram me chamar... eu estou aqui, o que que há
+E7    A    E7    A
+Foram me chamar... eu estou aqui, o que que há
+
+E7    A    E7    A
+Eu vim de lá, eu vim de lá pequenininho
+A    E7    A
+Mas eu vim de lá pequenininho
+
+F#7    B7    E7    C#m5-/7
+Alguém me avisou pra pisar nesse chão devagarinho
+F#7    B7    E7    A
+Alguém me avisou pra pisar nesse chão devagarinho
+
+F#7    Bm7    E7    A
+Sempre fui obediente, mas não pude resistir
+F#7    Bm7    E7
+Foi numa roda de samba, que juntei-me aos bambas
+A
+Pra me distrair
+
+F#7    Bm7    E7    C#m5-/7
+Quando eu voltar da Bahia, terei muito o que contar
+F#7    Bm7    E7
+Ó padrinho não se zangue, que eu nasci no samba
+A
+E não posso parar`},
+
+{ id:19, bloco:3, title:"Água de Chuva no Mar", key:"C", content:
+`C7+    C6    B7    C7+    C6
+O meu coração, hoje tem paz
+B7    Dm7    Dm7+
+Decepção, ficou pra trás
+Dm7    Dm7+    Dm
+Eu encontrei um grande amor
+G9sus4    G7    C7+    C6
+Felicidade enfim chegou
+
+B7    C7+    C6
+Como o brilho do luar
+Eb7    Dm7    Dm7+
+Em sintonia com o mar
+Dm7    Dm7+    Dm
+Nessa viagem de esplendor
+G9sus4    G7    Em7(b5)    C7
+Meu sonho se realizou
+
+F7+    F6    Fm7
+A gente se fala no olhar no olhar
+     C/E    A7(b9)
+É água de chuva no mar no mar
+A7    Dm7
+Caminha pro mesmo lugar
+Em7    F7+
+Sem pressa sem medo de errar
+G7/13    C7+    C6    Gm7
+É tão bonito, é tão bonito o nosso amor
+
+C7    F7+    F6    Fm7
+A gente tem tanto querer querer
+C/E    A7(b9)
+Faz até a terra tremer tremer
+A7    Dm7
+A luz que reluz meu viver
+Em7    F7+    G7/13    C
+O sol do meu amanhecer é você.`},
+
+{ id:20, bloco:3, title:"Vou Festejar", key:"Dm", content:
+`     Dm7
+Chora!
+     Gm7
+Não vou ligar
+     C7
+Chegou a hora
+Db°     Dm7
+Vais me pagar
+     E7
+Pode chorar
+A7    Dm7
+Pode chorar
+     A7
+Mas chora
+
+D      F#m7
+É, o teu castigo
+     Am7    B7
+Brigou comigo
+     Em7
+Sem ter porque
+Gm7    D
+Eu vou festejar
+     B7
+Vou festejar
+     A#7
+O teu sofrer
+A7    Dm7
+O teu penar
+
+[Refrão]
+     D7    Gm7    C7    F7M
+Você pagou com traição
+A#7    Em7(5-)    A7    Dm7
+A quem sempre lhe deu a mão
+     D7    Gm7    C7    F7M
+Você pagou com traição
+A#7    Em7(5-)    A7    Dm7
+A quem sempre lhe deu a mão
+     A7
+Mas chora`},
+
+/* ── BLOCO 4 — FORROGODÊ ── */
+{ id:21, bloco:4, title:"La Belle de Jour / Mar e Sol", key:"C", content:
+`[Intro] C Em C Em
+
+C    Em    C    Em
+Ah, hei... ah, hei
+F    G    C    Em
+Ah, La Belle de Jour
+
+C
+Eu lembro da moça bonita
+Em
+Da praia de Boa Viagem
+C
+E a moça no meio da tarde
+Em
+De um domingo azul
+
+Am
+Azul era Belle de Jour
+Em
+Era a bela da tarde
+F
+Seus olhos azuis como a tarde
+G
+Na tarde de um domingo azul
+
+C    Em
+La Belle de Jour
+Am
+Belle de Jour
+Em
+Belle de Jour
+
+Am
+Era a moça mais linda
+Em
+De toda a cidade
+Am
+E foi justamente pra ela
+Em
+Que eu escrevi o meu primeiro blues
+
+F
+Mas Belle de Jour
+Em
+No azul viajava
+F
+Seus olhos azuis como a tarde
+G
+Na tarde de um domingo azul
+
+─── MAR E SOL / GIRASSOL ───
+
+C
+Gira, gira, gira
+Em
+Gira, gira, gira, gira, girassol
+
+C    Em
+Um girassol nos teus cabelos
+C    Em
+Batom vermelho, girassol
+F    Em
+Morena flor do desejo
+F    G    C    Em
+Ah, teu cheiro em meu lençol
+
+Am    Em
+Desço pra rua, sinto saudade
+Am    Em
+Gata selvagem, sou caçador
+F    Em
+Morena flor do desejo
+F    G    C    Em
+Ah, teu cheiro matador`},
+
+{ id:22, bloco:4, title:"Eu Só Quero um Xodó", key:"C", content:
+`Tom: C
+
+[Intro] F C G7(9) C G7
+
+C    Am7    Em7
+Que falta eu sinto de um bem
+Dm7    G7(9)    C7    G7(9)
+Que falta me faz um xodó
+C    Am7    Em7
+Mas como eu não tenho ninguém
+Dm7    G7(9)    C
+Eu levo a vida assim tão só
+
+Gm    C
+Eu só quero um amor
+Gm    D7
+Que acabe o meu sofrer
+
+[Refrão]
+Am7    D7    Am7    D7
+Um xodó pra mim do meu jeito assim
+F    C/E    Dm7    G7(9)    C
+Que alegre o meu viver`},
+
+{ id:23, bloco:4, title:"Anunciação", key:"G", content:
+`G    Am
+Na bruma leve das paixões que vem de dentro
+C    G
+Tu vens chegando prá brincar no meu quintal
+Am
+No teu cavalo peito nu cabelo ao vento
+C    G
+E o sol quarando nossas roupas no varal
+
+[Refrão]
+G7    Em7
+Tu vens, tu vens
+F    C    G
+Eu já escuto os teus sinais
+
+G    Am
+A voz do anjo sussurrou no meu ouvido
+C    G
+E eu não duvido, já escuto os teus sinais
+Am
+Que tu virias numa manhã de domingo
+C    G
+Eu te anuncio nos sinos das catedrais`},
+
+{ id:24, bloco:4, title:"Ai Que Saudade D'Ocê", key:"F", content:
+`Tom: F
+
+⚠️  Cifra completa não disponível no repertório.
+     Consulte a partitura original ou acorde de ouvido.`},
+
+{ id:25, bloco:4, title:"Banho de Cheiro", key:"A", content:
+`Tom: A
+
+⚠️  Cifra completa não disponível no repertório.
+     Consulte a partitura original ou acorde de ouvido.`},
+
+/* ── BLOCO 5 ── */
+{ id:26, bloco:5, title:"Vara de Família", key:"A", content:
+`— Galocantô  ·  Tom: A —
+
+[Intro] A F#7 B7 E7 C#m7(5-) F#7 B7 E7 A
+
+A7M    C#7(13-)    F#m    G7(9)    C#m7(5-)
+Vamos dançar separados, eu pra lá você pra cá
+F#7    B7(13)    E7    Fº    F#m
+Quando está descompassado, o melhor é se soltar
+C#7    F#m    E7(9)    C#m7(5-)
+Nada de passo cruzado, puladinho nem pensar
+F#7(9-)    B7(13)    E7(9)    A7M
+Vamos dançar separados, eu pra lá, você pra cá
+
+F#7(9)    B7(13)    E7(9)
+Vamos dançar separados — já disse Cecília
+A7M    F#7(9)    B7(13)
+Tipo vara de família — separados
+E7(9)    C#m7(b5)
+Vara de família — separados
+
+F#7(9)    Bm7    E7    A7M
+Quem não dança pega na criança, senão cansa e não vai acertar
+Em    A7    D7M
+Não tem tropeço, eu reconheço e pago o preço do DNA
+D#º    C#m7(5-)
+Como dizia o jurista Antonio Evaristo de Melo Peixoto
+B7(13)    E7(9)    A7M
+Vamos dançar separados pra um não pisar no pé do outro`},
+
+{ id:27, bloco:5, title:"Tia Nastácia", key:"A", content:
+`C#m7/5-    F#7    G#m7/b5    C#7
+Na hora que o sol se esconde
+F#m7
+E o sono chega
+Bm7    E7    A7+
+O sinhozinho vai procurar
+Bm7    E7    A
+Hum... hum... hum
+
+C#m7/5-    F#7    G#m7/b5    C#7
+A velha de colo quente
+F#m7
+Que conta quadras
+Bm7    E7    A7+
+Que conta estória para ninar
+Bm7    E7    A
+Hum... hum... hum
+
+A    Bm7    E7
+Tia Nastácia que conta história
+A    Bm7    E7
+Tia Nastácia sabe agradar
+A    Bm7    E7
+Tia Nastácia que quando nina
+A    Bm7    E7
+Acaba por cochilar
+
+A    Bm7    E7
+Tia Nastácia vai murmurando
+A    Bm7    E7
+Estória para ninar
+
+A    Bm7    E7
+La la ia la la ia la la ia
+G#m7/b5    C#7    F#m7
+La la ia la la ia la la ia
+Bm7    E7    A
+La la la ia la la ia la la ia`},
+
+{ id:28, bloco:5, title:"Mesmo Manto", key:"A", content:
+`E7    A    F#7
+Pensou me amarrar ô
+Bm
+Marcou bobeira
+E7
+Vou me banhar, vou me jogar
+A
+Na cachoeira
+
+E7    A    F#7
+Não valeu rezar ô
+Bm
+A noite inteira
+E7
+Pra me ganhar, pra me ganhar
+
+Am    B7/5-    E7
+É... me querendo fez pedido pro meu santo
+Am    Dm
+É... sem saber se debruçou no
+G7    C6
+Mesmo manto onde eu me deitei
+B7/5-    E7
+E pra Xangô me dediquei
+
+Am    B7/5-
+É... sempre me preocupei com o meu destino
+Am    Dm    G7
+É... trago no sorriso aberto o desatino
+C6
+Que vem da paixão
+B7/5-    E7    A
+Pra iludir meu coração ô ô
+
+Am    B7/5-    E7    Am
+É... dentro do meu sentimento, sou madeira
+Dm    G7    C6
+Só me entrego à paixão verdadeira
+B7/5-    E7    A
+Verdadeira, verdadeira ô ô`},
+
+{ id:29, bloco:5, title:"Luz do Repente / Feirinha da Pavuna / Caxambu", key:"F", content:
+`─── LUZ DO REPENTE ───
+
+F    D7
+Deixa comigo
+D7    Gm    C7
+Eu seguro o pagode e não deixo cair
+F    D7
+É, é
+Gm    C7    F    D7
+Sem vacilar... É, é — Sem me exibir... É, é
+Gm    C7    F
+Só vim mostrar, é, o que aprendi
+
+D7    Gm
+Eu sou partideira da pele mais negra
+C7    F
+Que venho e que chego para improvisar
+Cm
+Já vi partideiro que nunca vacila
+F7    Bb
+Entrando na fila e querendo versar
+Bbm
+Mas dou meu aviso que o meu improviso
+Am
+É sério, é ciso, não é de brincar
+D7    Gm
+Otário com aço, eu mando pro espaço
+C7    F
+Eu sambo, eu faço o bicho pegar
+D7    Gm
+A luz do repente, a estrela cadente
+C7    F
+Chega de repente. Não dá pra sentir
+
+Cm
+Na lei do pagode, só versa quem pode
+F7    Bb
+Quem sabe somar e não subtrair
+Bbm
+Não sou diamante, sou fina esmeralda
+Am
+Não sou turmalina, nem mesmo rubi
+D7    Gm
+Por onde eu passo, eu deixo saudade
+C7    F
+A Pérola Negra passou por aqui
+
+─── FEIRINHA DA PAVUNA ─── (Sequência de F)
+
+─── CAXAMBU ───
+
+G    D7    G
+Olha vamos na dança do Caxambu
+C    G
+Saravá, jongo, saravá
+Am
+Engoma, meu filho que eu quero ver
+D7    G
+Você rodar até o amanhecer
+
+G    C
+O tambor tá batendo é pra valer
+G
+É na palma da mão que eu quero ver
+Am
+O tambor tá batendo é pra valer
+D7    G
+E na palma da mão que eu quero ver
+
+D7    G    C    G
+Dona Celestina me dá água pra beber
+C    G    C    G
+Se você não me der água vou falar mau de você
+D7    G    C    G
+Deu meia noite, o galo já cantou
+C    G    D7
+Na igreja bate o sino é na dança do jogo que
+G
+Eu vou`},
+
+/* ── BLOCO 6 ── */
+{ id:30, bloco:6, title:"A Sorrir / Sol Nascerá", key:"G", content:
+`Tom: G
+
+G     G/F    C/E
+A sor... rir
+D/C    A7(9)    D7(13)
+Eu pretendo levar a vida
+
+G     G/F    C/E
+Pois cho... rando
+D/C    A7(9)    D7(13)    G    D7
+Eu vi a mocidade perdida
+
+C7M    Cm7
+Finda a tempestade
+G    G/F
+O sol nascerá
+A7
+Finda esta saudade
+D7    Em7    D/F#
+Hei de ter outro alguém para amar`},
+
+{ id:31, bloco:6, title:"Sorriso Negro", key:"C", content:
+`Tom: C
+
+C    F7    C
+Um sorriso negro, um abraço negro
+Em5-/7    A7    Dm7
+Traz... felicidade
+
+A7    Dm7    A7    Dm7
+Negro sem emprego, fica sem sossego
+G7    C    (G7)
+Negro é a raiz da liberdade
+
+A7    Dm7
+Negro é uma cor de respeito
+G7    C
+Negro é inspiração
+Gm
+Negro é silêncio, é luto
+C7    F7+
+Negro é... a solução
+
+F6    Fm6
+Negro que já foi escravo
+G7    C
+Negro é a voz da verdade
+
+A7    D7/13    D5+7
+Negro é destino, é amor
+G7    C    G7
+Negro também é saudade...
+(um sorriso negro!)`},
+
+{ id:32, bloco:6, title:"Acreditar", key:"E", content:
+`E
+Acreditar, eu não
+E7    A    C#7
+Recomeçar, jamais
+
+F#m    G#7    C#m    C#7
+F#m    B7    E    B7
+A vida foi em frente
+E você simplesmente não viu que ficou pra trás`},
+
+{ id:33, bloco:6, title:"Sonho Meu", key:"E", content:
+`Intro: (E B7)
+
+E    C#7    F#m7
+Sonho meu, sonho meu
+B7
+Vai buscar que mora longe
+E    C#7    F#m7
+Sonho meu, sonho meu
+G#m7    G°
+Vai mostrar esta saudade
+F#m7
+Sonho meu
+B7
+Com a sua liberdade
+E
+Sonho meu
+
+G#m7    G°    F#m7
+No meu céu a estrela guia se perdeu
+B7    E
+A madrugada fria só me traz melancolia
+Sonho meu
+
+F#m7    B7
+Sinto o canto da noite
+E
+Na boca do vento
+F#m7    B7
+Fazer a dança das flores
+E
+No meu pensamento
+
+E7    A
+Traz a pureza de um samba
+Bb°    G#m7
+Sentido, marcado de mágoas de amor
+C#7    F#m7
+Um samba que mexe o corpo da gente
+B7    E
+E o vento vadio embalando a flor`},
+
+{ id:34, bloco:6, title:"Todo Menino é um Rei", key:"A", content:
+`E7    A    E7    A
+Todo menino é rei... eu também já fui rei
+F#7    Bm7    E7    A
+Mas quá... despertei
+
+E7    A    F#7    Bm7    E7
+Por cima do mar, da ilusão eu naveguei, sonho em vão
+A    F#7    Bm7
+Não encontrei o amor que eu sonhei
+E7    A
+Nos meus tempos de menino
+
+Bm7    C#m7
+Porém menino sonha demais
+F#7    Bm7
+Menino sonha com coisas
+E7    A
+Que a gente cresce e não vê jamais
+
+[Refrão]
+E7    A    F#7    Bm7
+A vida que eu sonhei, nos tempos que eu era só
+E7    A
+Nada mais do que menino, menino pensando só
+E7    A    A7    D
+No tempo do amanhã, na deusa do amor maior
+E7    A    F#7    Bm7
+Nas caminhadas sem pedra, no mundo sem ter um nó`},
+
+/* ── BLOCO 7 ── */
+{ id:35, bloco:7, title:"Preto Cor Preta", key:"Gm", content:
+`Gm    Dm    Gm    Dm
+Preto que é preto ilumina porque é preto
+Gm    Dm    Gm    Dm
+Preto que é preto combina de se olhar
+Gm    Dm    D#7+
+Preto é uma cor mas também é minha preta
+F    Gm    Am    G#m
+Cor e pele preta sem se misturar
+
+Gm    Dm    Gm    Dm
+Preto que é preto ilumina porque é preto
+Gm    Dm    Gm    Dm
+Preto que é preto combina de se olhar
+Gm    Dm    D#7+
+Preto que tem resolvida sua cor
+F    Gm    Dm
+Não tem que se impor, nem que se curvar
+
+Cm7    Gm7    Cm7    Gm7
+Tem nada a ver com a cor alguém sambar
+Cm7    Gm7    Cm7    Gm7
+Tem nada a ver com a cor saber gingar
+
+Gm7    Dm    Gm7    Dm7
+A gente ajeita quando tem cabeça feita
+Gm7    Dm7    Gm7    Dm7
+Que lá no fundo quando deita é tudo igual
+Gm7    Dm7    Gm7    Dm7
+Pra quem me aceita e como negro me respeita
+D#    F    Gm7    Dm7
+Eu sou pretinho, nêgo véio, coisa e tal`},
+
+{ id:36, bloco:7, title:"Coisa de Pele", key:"A7+", content:
+`Bm7    E7    A7+    A6
+Podemos sorrir
+E7    Fdim
+Nada mais nos impede
+F#m7
+Não dá pra fugir
+Em7    A7
+Dessa coisa de pele
+
+D7+    Dm
+Sentida por nós
+C#m7/5-    F#7/9+
+Desatando os nós
+B7
+Sabemos agora
+Bm7    E7
+Nem tudo que é bom vem de fora
+
+A7+    A6    G#m7/5-    C#7/9-
+E a nossa canção pelas ruas e bares
+F#m7
+Nos traz a razão
+Em7    A7
+Relembrando Palmares
+
+D7+    Ebdim
+Foi bom insistir
+A7+    F#7/9+
+Compor e ouvir
+B7(13)    Bm7    E7/9-
+Resiste quem pode na força dos nossos pagodes
+
+Am7
+E o samba se faz
+E7/9
+Prisioneiro pacato dos nossos tantãs
+Em7/5-
+O banjo liberta
+A7    Dm7
+Da garganta do povo as suas emoções
+G7
+Alimentando muito mais
+C    C6
+A cabeça de um compositor
+B7
+Eterno reduto de paz
+Bm7    E7/9-    A7+    A6
+Nascente das várias feições do amor`},
+
+{ id:37, bloco:7, title:"Meu Castelo", key:"G7+", content:
+`— Castelo de um Quarto Só  ·  Renato da Rocinha  ·  Tom: A —
+
+[Intro] G7M(9) Em11 C7M(9) D/C | Bm7(b5) E7(9+) Am9 D7/F#
+
+G6    C7M(9)
+O meu castelo tem um quarto só
+G6(9)    C7M(9)
+E amianto pra cobrir minha cabeça
+G6(9)    C7M(9)
+Meu guarda-roupa é feito de uma só gaveta
+Bm11    Am7(9)    Am7/G    F#m7(b5)    B7(b9)
+E mora lá, o passarinho verde da esperança
+
+Em7    Bm11
+Quem tenta incessantemente alcança
+C7M(9)    D7(4)    G7M(9)    D/F#    Bm7(b5)
+No balanço das andanças aprendi sobreviver
+
+E7(b9)    A7(9)
+Quem tenta incessantemente alcança
+Am7(9)    D6    G7M(9)
+No balanço das andanças aprendi sobreviver
+
+Am7(9)    Bm7    E7(b9)
+Vida dolorida pra lá de sofrida, pra encher a barriga é preciso suar
+Am7(9)    D9    Dm7    G7(4)
+Banho de caneco, partiu pro boteco, pagode e cerveja pra anestesiar
+
+C#m7(b5)    D7(9)    Bm7    E7(b9)
+Valei-me poderoso Deus, olhai esse pobre aprendiz
+Am7(9)    D7(9)
+Não tenho dinheiro, nem carro maneiro`},
+
+{ id:38, bloco:7, title:"Brilho no Olhar", key:"G7+", content:
+`Tom: D
+
+Introdução: D6/9 F#m7^Fm7^Em7 A7/13
+
+D6/9    F#m7    A7/13    D6/9
+Ilaia... ilaia... ilaia, laiala, laia la
+
+Bm       F#m7
+O que aconteceu com aquele sentimento
+G7+^F#m7^Em7
+A7/13    D6/9
+Cadê aquele brilho no seu olhar
+
+Bm       F#m7
+Não deixe que o tempo apague nossa história
+G7+^F#m7^Em7
+A7/13    D6/9
+Porque ainda é tempo pra recomeçar
+
+G7+    F#7    Bm    D7/13
+Eu só sei dizer que te amo
+G7+    F#7    Bm    Am7^D7/13
+Te amo demais
+
+G7+    Gm6    F#m7
+Vem que eu não quero esse jogo louco
+Fº     Em7
+Sem você eu fico no sufoco
+A7/13    Am7    D7/13
+Senta aqui pra gente conversar
+
+G7+    Gm6    F#m7
+Vem, duas vidas numa só estrada
+Fº     Em7
+É amor e não conto de fadas
+F#m7^G7+^A7/13^D6/9
+Eu nasci pra te amar`},
+
+{ id:39, bloco:7, title:"Problema Emocional", key:"D", content:
+`— Reinaldo  ·  Tom: D —
+
+[Intro] D6(9) D4(6)/A
+
+D6(9)    F#m7(5-)    B7    Em    Gm6
+Aquela noite estava mal, problema emocional, não ia nem sair
+F#m7    B7    G#m7(5-)    A7    D6(9)
+Queria me esquecer depois do que sofri, bom te conhecer
+
+F#m7(5-)    B7    Em    Gm6
+Teu sorriso conseguiu alegrar meu coração logo que a gente se viu
+F#m7    B7    G#m7(5-)    A7    Dm
+Rolou uma emoção, vi que todo mundo tem em algum lugar alguém
+
+Gm7    C7(9)    F7M    Bb7M    Em7(5-)
+Que tá vindo por aí, quando menos esperar, vem sambando devagar
+A7
+E diz assim
+
+D6(9)
+Estava te esperando amor
+C#m7(5-)    F#7
+Muito prazer, esqueça o que passou
+Bm7    A#m7    Am7
+Vim te dar felicidade, vim te amar de verdade
+
+D7    G7M    C7(9)    F#m7    B7
+O passado não vale mais, nada me amarrei de graça
+E7(9)    Bb7M    A7
+Quero te amar e dizer que eu amo você`},
+
+{ id:40, bloco:7, title:"Show Tem que Continuar", key:"C", content:
+`Ebº    Dm    G7    C7M
+O teu choro já não toca, meu bandolim
+Ebº    Dm    G7    Gm7
+Diz que minha voz sufoca, teu violão
+C7    Am6    Fm6    Em7
+Afrouxaram-se as cordas e assim desafina
+Ebº    Dm    G7    Gm7
+E pobre das rimas, da nossa canção
+C7    Am6    Fm6    Em7
+Hoje somos folha morta, metais em surdina
+Dm    G7    C7M
+Fechada a cortina, vazio o salão
+
+Ebº    Dm    G7
+Se os duetos não se encontram mais
+C7M    Ebº
+E os olhos perderam emoção
+Dm    G7    C7M    Am
+Se acabou o gás pra cantar o mais simples refrão
+Bm7/5b    E7    Am    Am7
+Se a gente nota que uma só nota
+Dm    G7    Gm7
+Já nos esgota, o show perde a razão
+
+E7    Am6
+Mas iremos achar o tom
+Fm6    Em7
+Um acorde com um lindo som
+Ebº    Dm
+E fazer com que fique bom
+G7    Gm7    E7
+Outra vez, o nosso cantar
+
+Am6
+E a gente vai ser feliz
+Em7
+Nós outra vez no ar
+Dm    G7    C
+O show tem que continuar`},
+
+/* ── BLOCO 8 ── */
+{ id:41, bloco:8, title:"Quem me Protege Não Dorme", key:"C", content:
+`— Marquinhos Sensação  ·  Tom: Am —
+
+C    F7M/C    C
+Fé, zé, axé
+
+C    C/Bb
+O homem de terno e gravata falou
+Avisa esse moço pra se resguardar
+F/A
+Tem gente esperando pra te ver sofrer
+Fm6
+Cair do cavalo e se machucar
+
+C
+Mas quem te protege não dorme, e pra crer
+C/Bb
+Se apegue na fé pro teu corpo fechar
+F/A
+Tem coisas que a gente não consegue ver
+Fm6
+Mas tá no caminho que é pra nos livrar
+
+F7M/C
+Das línguas ferinas
+F/G    G/F
+Energias tortas
+G/A
+Dos falsos sorrisos
+Gm7
+Das mentes maldosas
+F7M/C
+Amores bandidos
+F/G    G/F
+De falsas propostas
+G/A
+De beijos de Judas
+Gm7
+Tapinha nas costas
+
+C    F7M/C    C
+Fé, zé, axé`},
+
+{ id:42, bloco:8, title:"Ogum", key:"C", content:
+`C7+    Am7    C/G    Dm7+
+Eu sou descendente zulu
+Dm7
+Sou um soldado de Ogum
+F/G    G7/9
+Um devoto dessa imensa legião de Jorge
+
+C7+    Am7    C/G
+Eu sincretizado na fé
+Dm7+    Dm7
+Sou carregado de axé
+F/G    G7/9
+E protegido por um cavaleiro nobre
+
+Gm6    C7/9    F#7/9
+Sim vou à igreja festejar meu protetor
+F#m7/5-
+E agradecer por eu ser mais um vencedor
+Fm6
+Nas lutas, nas batalhas
+
+Gm6    C7/9    F#7/9
+Sim vou ao terreiro pra bater o meu tambor
+F#m7/5-
+Bato cabeça, firmo ponto, sim senhor
+F/G    G7/9
+Eu canto pra Ogum
+
+Dm7
+Ogum — Um guerreiro valente que cuida da gente que
+F/G    G7/9-
+Sofre demais
+Em7
+Ogum — Ele vem de aruanda, ele vence demanda de gente
+A7/4    A7
+Que faz
+Dm7    F/G
+Ogum — Cavaleiro do céu, escudeiro fiel, mensageiro da
+E/G
+Paz
+
+C7+
+Ogum ÔÔÔ Ogum`},
+
+{ id:43, bloco:8, title:"Reza / É D'Oxum", key:"D", content:
+`─── REZA  ·  Maria Rita  ·  Tom: E ───
+
+[Intro] A7M/C# Em7(13)/C# A6 A6(9)
+
+D7M    Dm6
+Re... za
+A7M    A7(4/9)
+Pra dona do mar nos abençoar
+
+D7M    Dm6
+Re... za
+A7M    A7(4/9)
+Pro amor florescer, pro bem imperar
+
+D7M    Dm6
+Re... za
+
+A7M    A6    A7M    A6
+Reza pra quem não crê, reza pra conquistar
+D/F#    Bm7(5-)    F6    G
+Reza pra agradecer o dia que vai chegar
+
+A7M    A6    A7M    A6
+Reza é pra quem tem fé nas lendas que vêm de lá
+D/F#    Bm7(5-)
+Reza pra proteger tudo neste lugar
+
+A7M
+Inaiá
+A/G
+Inaê, inaê, inê
+D/F#
+Inaê, inaê, iná
+F6    G    A7M
+Inaê, inaê, inê, inê a
+
+─── É D'OXUM  ·  Jauperi  ·  Tom: D ───
+
+D7M    Em
+Nessa cidade todo mundo é D'Oxum
+A    D7M
+Homem, menino, menina, mulher
+
+D7M    Em
+Toda essa gente irradia magia
+Em7    G
+Presente na água doce
+Em7    G
+Presente na água salgada
+
+G/A
+Em toda cidade brilha
+
+D7M    Em
+Seja tenente ou filho de pescador
+A    D7M
+Ou importante desembargador
+
+Em7    G
+A força que mora n'água
+Em7    G
+Não faz distinção de cor
+
+G/A    D7M
+E toda cidade é D'Oxum
+Em7    D7M    Em7    G/A
+É D'Oxum... é D'Oxum... é D'Oxum
+
+D7M
+Eu vou navegar... eu vou navegar
+Em7
+Nas ondas do mar... eu vou navegar`},
+
+{ id:44, bloco:8, title:"Oyá", key:"D", content:
+`D    A7
+Oyá
+
+D    B7    Em    B7
+É o povo de cá pedindo pra não chover
+Em    A7    D    Em7    D    A7
+Nossa gente ilhada precisa sobreviver
+
+D    B7    Em    B7
+E levantam-se as mãos, pedindo pra Deus — Oyá
+
+Em    D    Am    D7
+Já não se vive sem farinha e pirão não há
+G    C#m7(b5)    F#7
+Não há... veria motivos pra gente
+Bm
+Desanimar
+Am    D7    G7M
+Se houvesse remédio pra gente remediar
+A7/4    A7
+Já vai longe a procura da cura que vai
+D
+Chegar
+
+C#m7(b5)    F#7    Em    A7(9)
+Lá no céu de Brasília estrelas irão cair
+G7M    G6    Em    A7
+E a poeira de tanta sujeira há de subir
+
+D    Am7    D7
+Oyá
+G7M    F7(9)    Bm
+Será que a força da fé que carrega nosso viver
+Am7    D7    G7M
+Pode mover montanhas e jogar dentro do mar
+Em
+A7/4    A7
+Tanta gente de bem que só tem mal pra dar`},
+
+{ id:45, bloco:8, title:"Lendas da Mata", key:"Em", content:
+`Tom: Em
+
+[Intro] Dm Em G7 C7 B7 Em G7 C7 B7
+
+Em    G7    C7    B7    Em
+O saci rodopiou ventania na palhoça
+G7    C7    B7    Em
+Sinhazinha bambeou deu mironga lá na roça
+
+Em    G7    C7    B7    Em
+O saci rodopiou ventania na palhoça
+G7    C7    B7    Em
+Sinhazinha bambeou deu mironga lá na roça
+
+E7    Am    D7    G
+Coisas que o olho não vê, e que a alma pode enxergar
+C7    Am    B7    Em
+Zombeteiro, ê caxambu! toque no pé do juá
+
+E7    Am    D7    G
+É mistério a força de crer, fundamentos que vem de lá
+C7    B7    Em
+Bicho do mato some do breu, se escondeu no juremá
+
+Em    G7    C7    B7    Em
+O saci rodopiou ventania na palhoça
+G7    C7    B7    Em
+Sinhazinha bambeou deu mironga lá na roça`},
+
+/* ── BLOCO 9 ── */
+{ id:46, bloco:9, title:"Radar", key:"Dm", content:
+`Tom: Dm
+
+Dm
+Olhando nossas fotos do passado
+O perigo estava lado a lado
+Am
+Eu não vi
+
+Dm
+Eu entendo tudo isso agora
+Que não tem vilão na nossa história
+Am
+Eu não vi
+
+Dm    Am
+E estou aqui sem saber o que falar
+Dm
+Para a minha vida você estava fora do radar
+Am
+Longe de mim vai piorar (yeah)
+Por isso eu digo
+
+Dm
+Baby, você não viu, baby, você não viu
+Am
+Baby, você não viu o que você perdeu
+
+Dm
+Embriagava todo dia a sua companhia
+Não queria pensar que o fim um dia chegaria
+Am
+Eu passeava em teu corpo, eu decifrava os teus sonhos
+Alucinadamente eu vivia em nossa utopia
+
+Dm
+Você me deixa sem graça
+Brinca com meu coração e isso é trapaça
+Am
+Lembro a noite toda nós fazendo fumaça
+Sempre fico mal quando o efeito da cachaça passa
+
+Dm    Am
+Estou aqui sem saber o que falar
+Dm
+Para a minha vida você estava fora do radar`},
+
+{ id:47, bloco:9, title:"Chupa Toda", key:"G", content:
+`(G Em Am D)
+
+É de babarixa! é de balacumbaca!
+É de babarixa! é de balacumbaca!
+
+Tetetetere tere tete tere tetere...
+
+Eu quero beijar a sua boca loca
+Eu quero beijar a sua boca loca
+E eu vou enfiar uva no céu da sua boca
+E eu vou enfiar uva no céu da sua boca
+
+Eai chupa toda!!!
+Eai, chupa toda!!!
+Eai, chupa toda!!!`},
+
+{ id:48, bloco:9, title:"Cria da Ivete", key:"Cm", content:
+`— Ivete Sangalo  ·  Tom: Cm —
+
+Cm
+Solteira não, alegre
+Fm
+Se tem birita a gente bebe
+Cm
+Tô com as amigas, só as gostosas
+Fm
+As experientes e perigosas
+
+G
+Vira tequila de uma vez
+Não sabe nem o que é ex
+Phd na arte de ferver
+
+Cm
+Só virotinho de mestre
+Só virotinho de mestre
+Fm
+Ah, esquece
+Tudo cria de Ivete
+
+Cm
+Pá-pá-parará
+Fm
+Pá-pá-parará
+G
+Tem gente que senta pra beber
+Cm
+Aqui nós bebe pra sentar
+
+Todas por uma, umas pelas outras
+Comandando tudo, as donas da porra toda`},
+
+{ id:49, bloco:9, title:"Energia de Gostosa", key:"Fm", content:
+`— Ivete Sangalo  ·  Tom: F —
+
+[Intro] F Gm F Gm / F Gm F C
+
+F
+Hoje é dia
+Gm
+De jogar sol na pele e meter um bronze de fitinha
+F/A
+Hoje é dia
+Gm    F
+De botar o decote pra jogo e passar o batom de mainha
+
+Gm
+Ela primeiro ela, ela segundo ela, ela terceiro ela
+F
+Ela se arruma só pra ela
+Gm
+Ela primeiro ela, ela segundo ela, ela terceiro ela
+A#/C    F
+E as amiga dela, autoestima lá em cima
+
+F
+Energia de gostosa
+Gm
+Ela passa balançando a lace
+Am
+Decidida, bonita e cheirosa
+A#
+Ela bate no peito que é foda
+
+F
+Energia de gostosa
+Gm
+Se sozinha ela já dá trabalho
+F
+Quando junta as amiga, incomoda
+Gm
+Sai de baixo que lá vem a tropa
+F
+Energia de gostosa`},
+
+{ id:50, bloco:9, title:"Banho de Folhas", key:"F#m", content:
+`F#m    Bm7
+Foi em uma quarta-feira
+C#m7    F#m
+Saí pra te procurar
+Bm7
+Andei a cidade inteira
+C#m7
+Mas, cadê você?
+F#m
+Cadê você?
+
+Bm7
+A cidade é grande
+C#m7
+As pessoas, muitas
+F#m
+E eu por aí
+Sem te encontrar
+
+Bm7    C#m7
+Vou pedir a Oxalá
+F#m
+Oxalá quem guia
+Bm7    C#m7
+Oxalá quem te mandou
+
+[Refrão]
+F#m
+Tanta volta pra nenhuma resposta
+Bm7
+Tanta volta pra nenhuma resposta
+C#m7
+Tanta volta pra nenhuma resposta
+F#m
+Tanta volta pra nenhuma resposta
+
+Bm7    C#m7
+Mas um punhado de folhas sagradas
+F#m    Bm7    C#m7
+Pra me curar, pra me afastar de todo mal
+
+F#m
+Para-raio, bete branca, assa peixe
+Bm7    C#m7
+Abre caminho, patchuli
+
+F#m
+Para-raio (para-raio)
+Bm7
+Para afastar o mau
+C#m7    F#m
+Para afastar a inveja
+Bm7
+Para atrair o amor
+C#m7    F#m
+Para atrair o que for bom`},
+
+/* ── BLOCO 10 — FINAL ── */
+{ id:51, bloco:10, title:"Não Quero Dinheiro", key:"A", content:
+`A    F#m
+Vou pedir pra você voltar
+A    F#m
+Vou pedir pra você ficar
+E4    A    E4
+Eu te amo, eu te quero bem
+
+A    F#m
+Vou pedir pra você gostar
+A    F#m
+Vou pedir pra você me amar
+Dm    E4    A7(4)    A7
+Eu te amo, eu te adoro, meu amor
+
+D    E/D
+A semana inteira, fiquei esperando
+C#m    F#m
+Pra te ver sorrindo, pra te ver cantando
+Bm    E4
+Quando a gente ama, não pensa em dinheiro
+A    A7(4)
+Só se quer amar, se quer amar, se quer amar
+
+A7    D    E/D
+De jeito maneira, não quero dinheiro
+C#m    F#m
+Quero amor sincero, isto é o que espero
+Bm
+Grito ao mundo inteiro
+E4    A    E4
+Não quero dinheiro, eu só quero amar`},
+
+{ id:52, bloco:10, title:"Gostava Tanto de Você", key:"A7+", content:
+`— Tim Maia  ·  Tom: A —
+
+[Intro] A7M E7(4/9) A7M E7(4/9)
+
+A7M    Bm7
+Não sei por que você se foi
+C#m7
+Quantas saudades eu senti
+Bm7
+E de tristezas vou viver
+A7M
+E aquele adeus não pude dar
+
+Bm7
+Você marcou na minha vida
+C#m7
+Viveu, morreu na minha história
+Bm7
+Chego a ter medo do futuro
+E da solidão
+A7M    E7(4/9)
+Que em minha porta bate
+
+[Refrão]
+A7M
+E eu
+E7(4/9)    A7M
+Gostava tanto de você
+E7(4/9)    C#m7    Bm7
+Gostava tanto de você
+
+A7M    Bm7
+Eu corro, fujo desta sombra
+C#m7
+Em sonho, vejo este passado
+Bm7
+E na parede do meu quarto
+C#m7
+Ainda está o seu retrato
+
+Bm7
+Não quero ver pra não lembrar
+A7M
+Pensei até em me mudar
+E7(4/9)
+Lugar qualquer que não exista
+A7M    E7(4/9)
+O pensamento em você`},
+
+{ id:53, bloco:10, title:"Descobridor dos Sete Mares", key:"Am", content:
+`Tom: Am
+
+⚠️  Cifra completa não disponível no repertório.
+     Consulte a partitura original ou acorde de ouvido.`}
+
+]; /* fim songs[] */
+
+/* ══════════════════════════════════════════
+   🎵 REPERTÓRIO 2024
+   ══════════════════════════════════════════ */
+const songs2024 = [
+{ id:0, bloco:1, title:"Arrasta a Sandalha", key:"D", content:
+`Tom: D
+
+D B7 Em7 A7 A7/5+ F#m7 B7
+Arrasta a sandália que o samba vai começar
+Em7 A7/5+ D B7
+Arrasta a sandália que o samba vai começar
+Em7
+O meu samba é de frente
+A7
+É fundo de quintal
+D
+Do morro do asfalto
+É dito popular
+Am7
+Brasileiro, guerreiro
+D7
+De chão, de terreiro
+G7+ G6
+Ele é de carvalho e de jequitibá
+Gm
+Sai de dentro do peito
+Não tem preconceito
+D C# C B7
+Emana alegria em qualquer lugar
+Em7 A7 F#m7/5- B7
+Arrasta a sandália que o samba vai começar
+Em7/9 A7 D6/9 B7
+Arrasta a sandália que o samba vai começar
+Em7
+Ele não tem segredo
+A7
+De roda, de enredo
+D6/9
+Em qualquer esquina
+À luz do luar
+Am7
+Ele é branco, ele é negro
+D7
+Arrasta a corrente
+G G5+ G6
+Inspira poetas em mesa de bar
+Gm
+Ele é valente, é coisa da gente
+D C# C B7
+Semente que brota em qualquer lugar`},
+
+{ id:1, bloco:1, title:"Sol Nascerá", key:"G", content:
+`Tom: G
+
+G G/F C/E
+A sor...rir
+D/C A7(9) D7(13)
+Eu pretendo levar a vida
+G G/F C/E
+Pois cho...rando
+D/C A7(9) D7(13) G D7
+Eu vi a mocidade perdida
+C7M Cm7
+Finda a tempestade
+G G/F
+O sol nascerá
+A7
+Finda esta saudade
+D7 Em7 D/F#
+Hei de ter outro alguém para amar`},
+
+{ id:2, bloco:1, title:"Sorriso Negro", key:"C", content:
+`Tom: C
+
+C F7 C
+Um sorriso negro, um abraço negro
+Em5-/7 A7 Dm7
+Traz... felicidade
+A7 Dm7 A7 Dm7
+Negro sem emprego, fica sem sossego
+G7 C (G7)
+Negro é a raiz da liberdade
+A7 Dm7
+Negro é uma cor de respeito
+G7 C
+Negro é inspiração
+Gm
+Negro é silêncio, é luto
+C7 F7+
+Negro é a solução
+F6 Fm6
+Negro que já foi escravo
+G7 C
+Negro é a voz da verdade
+A7 D7/13 ^ D5+7
+Negro é destino é amor
+G7 C G7
+Negro também é saudade (um sorriso negro!)`},
+
+{ id:3, bloco:2, title:"Partido Alto", key:"G", content:
+`Tom: G
+
+G C G C Em C G
+Diz que deu, diz que dá, diz que Deus dará, Deus dará
+G C G C G
+Dará, não vou duvidar, ô nega
+Deus me deu mão de veludo prá fazer carícia
+Em C G
+Ô nega?, Deus dará, Deus dará
+Deus me deu muita saudade e muita preguiça
+C# G
+Deus me deu perna cumprida e muita malícia
+Em Am D
+Prá correr atrás da bola e fugir da polícia
+G
+Um dia ainda sou notícia
+
+G C G C
+Diz que deu, diz que dá, diz que Deus
+G C G C
+Dará, não vou duvidar, ô nega
+G C B7
+E se Deus não dá, como é que vai ficar,
+Em C G
+Ô nega?, Deus dará, Deus dará`},
+
+{ id:4, bloco:2, title:"Cabide", key:"G", content:
+`Tom: G
+
+G F#º Em7
+E se eu fingir e sair por ai na noitada
+Am7 D7
+Me acabando de rir
+G F#º
+E se eu disser que não digo, não ligo
+Em7 Am7 D7
+Fico e que só vou aprontar
+Am7 D7 Bm7
+É que eu sambo direitinho, assim bem miudinho
+E7
+Cê não sabe acompanhar
+Am7 A#º Bm7
+Vou arrancar sua saia e pôr no meu cabide só pra
+E7
+Pendurar
+Am7 D7 G
+Quero ver se você tem atitude e se vai encarar`},
+
+{ id:5, bloco:2, title:"Fogo de Paixão", key:"C", content:
+`Tom: C
+
+C7+ E7
+Dentro do meu ser arde uma paixão
+F Gm7 C7
+Fogo de saudade que invade o coração
+E7 Am
+Foi sem perceber que o amor chegou
+D7 G7/4 G7
+Sem nem mais porque... a luz se apagou
+C Bm5-/7 E7
+E sendo assim, a minha voz não vou calar
+Am D7 Gm7 C7
+Desejo sim... que um novo sol venha brilhar
+F F#º7 C A7
+Quem ama pra valer no amor se fortalece
+D7 G7/4 G7
+Não fiz por merecer a dor que me entristece
+D7 G7 C
+Que tanto me fez chorar`},
+
+{ id:6, bloco:2, title:"Tendência", key:"C", content:
+`Tom: C
+
+C6/9 Am D7
+Não... pra que lamentar
+Fm G7 C C/A#
+O que aconteceu era de esperar
+F G7 C/E
+Se eu lhe dei a mão, foi por me enganar
+A7 D7
+Foi em perceber
+G7 G7/13 C Am
+Que o amor não pode haver
+D7 Fm G7 C C/A#
+Sem compreensão a desunião, tende aparecer
+F G7 C/E A7
+E aí está, o que aconteceu
+D7 G7 C G7
+Você destruiu o que era seu
+C
+Você entrou na minha vida
+Bm5-/7 E7
+Usou e abusou... fez o que quis
+A7 D7/9 C7/9
+Agora se desespera, dizendo que é infeliz
+F F#º C A#7 A7
+Não foi surpresa pra mim, você começou pelo fim
+D7 G7 G5+7
+Não me comove o pranto de quem é ruim, e assim
+D7 G7 C
+Se precisar pode me procurar`},
+
+{ id:7, bloco:2, title:"Ainda é Tempo", key:"Em", content:
+`Tom: Em
+
+G Gm F#m F#m5-/7 B7
+Me cansei de ficar mudo sem tentar...... sem falar
+G Gm F#m B7/9
+Mas não posso deixar tudo como está
+G A
+Tô vivendo por viver, tô cansada de chorar
+F#m5-/7 B7
+Não sei mais o que fazer, você tem que me ajudar
+Em F#m Em5-/7 A7 D7/9
+Tá difícil esquecer, impossível não lembrar vocêê...
+Am D7
+E você como está?
+G A7 F#m5-/7 D7/9
+Vem pros meus braços meu amor, meu acalanto
+G Gm F#m5-/7 D7/9
+Leva esse pranto pra bem longe de nós dois
+G A7 F#m5-/7 B7
+Não deixe nada pra depois, é a saudade que me diz
+Em A7 Am D7/9
+Que ainda é tempo pra viver feliz...`},
+
+{ id:8, bloco:3, title:"Avião", key:"Eb", content:
+`Tom: Eb
+
+Fm7 Gm7 G#7M A#7(4/9) D#6(9)
+Pode quebrar sofrer, cair, descer
+Gm7 C7(b9)
+Contorcer de dor
+Fm7 Gm7 G#7M
+Não vou mais me prender a você
+Gm7 C7(b9)
+Fazer o mesmo show
+Fm7 Gm7 G#7M
+Vou bater na porta da vida
+Gm7 C7(b9)
+Receber e pagar
+Fm7 Gm7 G#7M
+Sem ter que me entregar a ninguém
+A#7(4/9) D#6(9)
+Seu muito pra mim é pouco
+Gm7 C7(b9) F7 F7(#11)
+Eu me cansei de ser seu avião
+Fm7 A#7(9)
+Não vou voar, não dessa vez`},
+
+{ id:9, bloco:3, title:"Flor de Lis", key:"D", content:
+`Tom: D
+
+D7M(9) C#m7(b5) F#7(b13)
+Será talvez, que minha ilusão
+Bm7(9) E7(13)
+Foi dar meu coração
+Am7
+Com toda força
+D7(9) G#m7(b5) C#7(b9)
+Pra essa moça me fazer feliz
+C7M B7(b13)
+e o destino não quis
+G#m7(b5) C#7(b9)
+Me ver como raiz
+F#m7(9) B7(b13)
+De uma flor de lis
+Bm6 A7(13) F#m7/C# Cm6
+E foi assim que eu vi
+Gm6 D7M(9) F#7(#9)
+Nosso amor na poeira, poeira
+Bm7(9) F#/A# Am7
+Morto na beleza fria de Maria
+D7(9) G7M
+E o meu jardim da vida
+C7(9) F#m7(9)
+Ressecou, morreu`},
+
+{ id:10, bloco:3, title:"Para Ver as Meninas", key:"F#m", content:
+`Tom: F#m
+
+F#m F#m/E G#7/D#
+Silêncio, por favor
+G#m7(5-)C#7
+Enquanto esqueço um pouco a dor
+F#m
+Do peito
+F#7 Em6/G F#7
+Não diga nada sobre meus defeitos
+E7
+Eu não me lembro mais
+A7M G#m7(5-) C#7
+Quem me deixou assim
+F#7 Em6/G F#7 Bm7
+Uma pausa de mil compassos
+G#m7(5-) C#7
+Para ver as meninas
+F#m/A F#m/C# F#m
+E nada mais nos braços
+G#m7(5-) C#7 F#m
+Um samba sobre o infinito`},
+
+{ id:11, bloco:4, title:"Tia Nastácia", key:"E", content:
+`Tom: E
+
+C#m7/5- F#7 G#m7/b5 C#7
+A velha de colo quente
+F#m7
+Que conta quadras
+Bm7 E7 A7+
+Que conta estória para ninar
+Bm7 E7 A
+Hum... hum...hum
+A Bm7 E7
+Tia nastácia que conta história
+A Bm7 E7
+Tia nastácia sabe agradar
+A Bm7 E7
+Tia nastácia que quando nina
+A Bm7 E7
+Acaba por cochilar
+A Bm7 E7
+Tia nastácia vai murmurando
+A Bm7 E7
+Estória para ninar
+A Bm7 E7
+La la ia la la ia la la ia`},
+
+{ id:12, bloco:4, title:"Lucidez", key:"G", content:
+`Tom: G
+
+[Intro] E F# A E
+E F#7
+Por favor! Não me olhe assim
+F#m E
+Se não for, vou viver só para mim
+F#7
+Aliás! Se isso acontecer
+A E
+Tanto faz, já me fiz por merecer
+F#7
+Mas cuidado, não vá se entregar
+Am B7
+Nosso caso não pode vazar
+E
+E tão bom se querer
+G#7
+Sem saber
+A Am D7
+Como vai terminar
+G#m7 C#7 F#m
+Onde a lucidez se aninhar
+Am D7/
+Pode deixar
+G#m7 C#7 F#m7
+Quando a solidão apertar
+B7
+Olhe pro lado, que estarei por lá
+La laiá... la laiá laaiiiá`},
+
+{ id:13, bloco:4, title:"Identidade", key:"D", content:
+`Tom: D
+
+[Intro] Em B7 Em B7
+Em Bm Em
+Elevador é quase um templo
+C G
+Exemplo pra minar teu sono
+F#
+Sai desse compromisso
+F
+Não vai no de serviço
+Em Bm Em
+Se o social tem dono não vai
+Bm Em
+Quem cede a vez não quer vitória
+C G
+Somos herança da memória
+F#
+Temos a cor da noite
+F
+Filhos de todo açoite
+Em C G
+Se preto de alma branca pra você
+A C Em
+É o exemplo da dignidade
+C G
+Não nos ajuda só nos faz sofrer
+A C Em
+Nem resgata nossa identidade`},
+
+{ id:14, bloco:5, title:"Moleque Atrevido", key:"A", content:
+`Tom: A
+
+E6/9
+Quem foi que falou
+B7 E6/9
+Que eu não sou um moleque atrevido
+Dm6
+Ganhei minha fama de bamba
+F#7 F#7/13
+No samba de roda
+F#m B7
+Fico feliz em saber
+E
+O que fiz pela música
+D7 C#7
+Faça favor
+F#m B7
+Respeite quem pode chegar
+E B7/9-
+Onde a gente chegou
+E6/9
+Também somos linha de frente
+B7 E6/9
+De toda essa história
+Dm6
+Nós somos do tempo do samba
+F#7 F#7/13
+Sem grana, sem glória
+E
+Não se discute talento
+D7 C#7
+Me faça o favor
+F#m B7
+Respeite quem pode chegar
+E D7 C#7
+Respeite a camisa que a gente suou`},
+
+{ id:15, bloco:5, title:"Água da Minha Sede", key:"G", content:
+`Tom: G
+
+[Intro] G6/9 C D7
+G C/E G C/E G
+Eu preciso do seu amor, paixão forte me domina
+Am7 D7 Bm7(5-) E7 A7/9 D7 G
+Água da minha sede, bebo na sua fonte
+Sou peixe na sua rede, pôr-do-sol no seu horizonte
+C/E G C/E G
+Quando você sambou na roda, quando você sambou na roda
+B7 Em7
+Fiquei a fim de te namorar
+A7 D7 E7 A7/9 D7 G
+O amor tem essa história, se bate já quer entrar
+Se entrar não quer sair ninguém sabe explicar
+C/E G C/E G
+O meu amor é passarinheiro
+B7 Em7
+Ele só quer passarinhar
+A7 D7 Bm7 E7 A7/9 D7 G
+Seu beijo é um alçapão, seu abraço é uma gaiola
+Que prende meu coração que nem moda de viola`},
+
+{ id:16, bloco:5, title:"Castelo de um Quarto Só", key:"A", content:
+`Tom: A
+
+[Intro] G7M(9) Em11 C7M(9) D/C | Bm7(b5) E7(9+) Am9 D7/F#
+G6 C7M(9)
+O meu castelo tem um quarto só
+G6(9) C7M(9)
+E amianto pra cobrir minha cabeça
+G6(9) C7M(9)
+Meu guarda roupa é feito de uma só gaveta
+Bm11 Am7(9)
+E mora lá o passarinho verde da esperança
+Em7 Bm11
+Quem tenta incessantemente alcança
+C7M(9) D7(4) G7M(9)
+No balanço das andanças aprendi sobreviver
+Am7(9) Bm7 E7(b9)
+Vida dolorida, pra lá de sofrida, pra encher a barriga é preciso suar
+Am7(9) D9 Dm7 G7(4)
+Banho de caneco, partiu pro boteco, pagode e cerveja pra anestesiar
+C#m7(b5) D7(9) Bm7 E7(b9)
+Valei-me poderoso Deus, olhai esse pobre aprendiz
+Am7(9) D7(9)
+Não tenho dinheiro, nem carro maneiro
+Dm7 G7(4)
+Meu samba me basta e me deixa feliz`},
+
+{ id:17, bloco:6, title:"Trilha do Amor", key:"F", content:
+`Tom: F
+
+[Intro] Gm C7 Gm C7
+Gm7(9)
+Eu vou seguindo a trilha do amor
+A#m6
+Enquanto essa paixão me guiar
+Am7
+Deixa o coração me levar
+Am7(5-) D7
+Deixa o coração me levar
+Gm7(9)
+Eu vou seguindo a trilha do amor
+A#m6
+Onde você quiser vou estar
+Am7 Am7(5-) D7
+Sem você não dá pra ficar
+Gm7(9)
+Matar a vontade que tanto senti
+Fm
+Sem o teu carinho não dá pra ficar
+Bm7 E7
+A falange atendeu ao meu Pai Oxalá
+Am7(5-) D7
+Pra ver se alguém me amarra ao ronco da cuíca`},
+
+{ id:18, bloco:6, title:"Cheia de Manias", key:"Gm", content:
+`Tom: Gm
+
+[Intro] Gm Eb Cm Db° D7/F#
+Gm
+Cheia de manias
+F
+Toda dengosa
+Gm
+Menina bonita
+F
+Sabe que é gostosa
+Gm
+Com esse seu jeito
+F
+Faz o que quer de mim
+Gm
+Domina o meu coração
+F
+Eu fico sem saber o que fazer
+Quero te deixar
+Gm F
+Você não quer, não quer
+[REFRÃO]
+Gm
+Então me ajude a segurar
+F
+Essa barra que é gostar de você
+Gm F
+Hê! Didididididiê`},
+
+{ id:19, bloco:6, title:"Retalhos de Cetim", key:"F", content:
+`Tom: F
+
+[Intro] Am
+Am7 Em7
+Ensaiei meu samba o ano inteiro
+Am7 Em7
+Comprei surdo e tamborim
+Am7 C7M
+Gastei tudo em fantasia
+F7M
+Era só o que eu queria
+F#º E7
+E ela jurou desfilar pra mim
+Am7 Em7
+Minha escola estava tão bonita
+Am7 Em7
+Era tudo o que eu queria ver
+Am7 C7M
+Em retalhos de cetim
+F7M
+Eu dormi o ano inteiro
+F#º E7
+E ela jurou desfilar pra mim
+[REFRÃO]
+A7M E/G# Em/G F#7
+Mas chegou... o carnaval
+Bm7 F7 E7
+E ela não... desfilou
+Am7 C/G F7M
+Eu chorei na avenida, eu chorei
+Dm
+Não pensei que mentia
+E7 Am E7
+A cabrocha, que eu tanto amei`},
+
+{ id:20, bloco:6, title:"Problema Emocional", key:"D", content:
+`Tom: D
+
+D6/9 F#m5-/7 B7
+Aquela noite estava mal, problema emocional, não ia nem sair
+Em Gm6
+Queria me esquecer depois do que sofri
+C7/13 F#m7 B7
+Foi bom te conhecer
+E7/9 A5+7 Dm7
+Teu sorriso conseguiu alegrar meu coração
+C#o Gm7
+Quando a gente se viu
+C7/13 F#m7 B7
+Rolou uma emoção, vi que todo mundo
+E7/9 A5+7 Dm7
+Tem em algum lugar alguém
+C#o Gm7
+Que tá vindo por aí, quando menos esperar
+A7 D6/9
+Vem sambando devagar
+E diz assim... estava te esperando, amor
+Muito prazer, esqueça o que passou
+Vim te dar felicidade... vim te amar de verdade
+O passado não vale mais
+Quero te amar e dizer que eu amo você`},
+
+{ id:21, bloco:7, title:"Nossa Escola", key:"D", content:
+`Tom: D
+
+Bm Em Bm E G F#m Em
+Oô Oô Oô Oô Oô
+F#7 Bm E7/9
+Oô Oô Oô
+Bm Bm7 F#m7 Bm E7/9
+Como toda bola é de Pelé
+Dona Ivone Lara
+B7 Em Bm E7/9
+A flauta de Altamiro é uma joia rara
+A7 D F#7 G F#m Em F#7 Bm
+Violão Baden pegou, Jovelina Pérola
+Bm Bm7 F#m7
+Todo cavaquinho é de Azevedo
+B7 Em
+A voz é Roberto Ribeiro
+A7 D F#7
+E Almir compositor (Laraiá)
+B7 Em A7 D7+
+Vai vadiar junto com a Clementina
+A7 Em
+E a fineza que ensina
+A7 D
+É Paulinho da Viola
+D7 G7+
+Genial mestre Cartola
+Gm6 F#m
+Martinho José Ferreira
+B7 Em
+Candeia, Tamarineira
+A7 D F#7
+Essa é a nossa Escola`},
+
+{ id:22, bloco:7, title:"Meu Lugar", key:"Am", content:
+`Tom: Am
+
+[Intro] Am7 Am6 Am7 | Dm7 G7(4/9) Am7(9)
+Am7(11) D7(9)
+O meu lugar é caminho de Ogum e Iansã
+Dm7(9) G7(13)
+Lá tem samba até de manhã
+C6(9) Bm7 E7(9-)
+Uma ginga em cada andar
+Am7 Am/G
+O meu lugar
+D7(9)
+É cercado de luta e suor
+Dm7(9) G7(4/9)
+Esperança num mundo melhor
+Gm7 C7(9)
+E cerveja pra comemorar
+[REFRÃO]
+G7(13) C6(9) Ebº Dm7 G7(4/9)
+Madureira, lá laiá
+C6(9) Ebº Dm7 G7(4/9)
+Madureira, lá laiá
+C6(9)
+Madureira`},
+
+{ id:23, bloco:7, title:"Será que é Amor", key:"A", content:
+`Tom: A
+
+[Intro] A7M E/G# Em/G F#7 | B7(9) E7(9) A7M A7(4)
+A7M E/G# C#m7(5-)
+La lalaiá lalaiá
+B7(9) E7 A7M F#7
+La lalaiá lalaiá laiá
+C#m7(5-) F#7
+Eu tenho tanto pra te falar
+C#m7(5-) F#7
+Não sei por onde vou começar
+B7(9)
+Toda hora que eu te vejo
+B7(4) B7(9)
+Quase morro de desejo
+D7(9) C#7 F#m7 A7(13)
+Acho que é paixão
+B7(9) E7(4/9) A7M
+Não deixa o nosso desejo
+E/G# Em/G F#7
+Virar poeira
+B7(9)
+Um oceano de amor
+E7 A7M Bm7
+Que não pode secar
+E7(4/9) A7M
+Minha paixão eu te juro
+E/G# Em/G F#7
+É pra vida inteira`},
+
+{ id:24, bloco:7, title:"O Que é o Amor", key:"G", content:
+`Tom: G
+
+Dm7 G7 C6(9) F7M
+Me disseram uma vez que o danado do amor pode ser fatal
+Dm7 G7 C7M
+Me disseram também que o amor faz o bem
+A7 D7(9)
+Quando a gente ama, brilha mais que o sol
+F7M G7 C7M E7 Am7(9)
+É muita luz, é emoção
+A7 D7(9) Dm7
+Quando a gente ama, é o clarão do luar
+D7(9)
+Quando a gente ama, brilha mais que o sol
+F7M G7 C7M E7 Am7(9)
+É muita luz, é emoção, o amor`},
+
+{ id:25, bloco:7, title:"A Sós", key:"A", content:
+`Tom: A
+
+A7M C° Bm7
+Chega mais, vem ouvir o que eu vou dizer
+D7M Dm6 A7M
+Pra mim não é fácil arrepender
+D7M Bm7 C°
+Declarar o amor se apossou de mim
+F#m7(9) B7
+Nada mais corrige o coração
+D7M Bm7
+Eu sou só emoção pra falar de você
+G#m11 F#m7(9)
+Te quero demais
+D7M E7/D
+E nós, a sós
+C#m7(5-) G7 F#7
+Nós dois e mais ninguém
+D7M E7/D
+Algoz, feroz
+C#m7 F#7(4) F#7
+O amor, ai, ainda mata alguém`},
+
+{ id:26, bloco:8, title:"Eu Só Quero um Xodó", key:"C", content:
+`Tom: C
+
+[Intro] F C G7(9) C G7
+C Am7 Em7
+Que falta eu sinto de um bem
+Dm7 G7(9) C7 G7(9)
+Que falta me faz um xodó
+C Am7 Em7
+Mas como eu não tenho ninguém
+Dm7 G7(9) C
+Eu levo a vida assim tão só
+[PRÉ-REFRÃO]
+Gm C
+Eu só quero um amor
+Gm D7
+Que acabe o meu sofrer
+[REFRÃO]
+Am7 D7 Am7 D7
+Um xodó pra mim do meu jeito assim
+F C/E Dm7 G7(9) C
+Que alegre o meu viver`},
+
+{ id:27, bloco:8, title:"Tropicana", key:"Am", content:
+`Tom: Am
+
+[Intro] Am Em Dm E7 | Am Em Dm E7
+Am Em
+Da manga rosa quero o gosto e o sumo
+Dm E7 Am
+Melão maduro, sapoti, juá
+Em
+Jaboticaba, teu olhar noturno
+Dm E7 Am
+Beijo travoso de umbú cajá
+G F C
+Pele macia é carne de caju
+G F C
+Saliva doce, doce mel, mel de uruçú
+Bm7(5-) E7 Am
+Linda morena, fruta de vez temporana
+Am/E Bm7(5-) E7 Am
+Caldo de cana caiana, vem me desfrutar
+Am Em
+Morena tropicana, eu quero o teu sabor
+Dm E7 Am
+Oi, oi, oi, oi
+Am Em
+Morena tropicana, eu quero o teu sabor
+Dm E7 Am
+Ai, ai, ai, ai`},
+
+{ id:28, bloco:8, title:"O Bêbado e a Equilibrista", key:"D", content:
+`Tom: D
+
+[Intro] D A/C# Bm7 Bm/A | G D/F# Em7 A7
+D A/C# Bm7 Bm/A
+Caía a tarde
+G D/F# Em7 A7 D6(9)
+Feito um viaduto e um bêbado trajando luto
+F#m7(5-) B7(9-) Em7M Em7
+Me lembrou Carlitos
+G7M F#m7 Em7
+A lua tal qual a dona de um bordel
+A#7(13) A7(13)
+Pedia a cada estrela fria
+Em7(9) A7(13) C7(13)
+Um brilho de aluguel
+
+Gm7(9) C7(9) Gm7(9) C7(9) C#7(9+) D6(9) G6(9)
+A esperança equilibrista
+F#m7 Bm7 E7(4/9) E7(9)
+Sabe que o show de todo artista
+Em7 C7(13) B7(13)
+Que sou, azar!
+Gm7(9) C7(9) Gm7(9) C7(9) C#7(9+) D7M(9) G6(9)
+A esperança equilibrista
+F#m7 Bm7 E7(4/9) E7(9)
+Sabe que o show de todo artista
+A7(4) A7(9-) D6(9)
+Tem que continuar`},
+
+{ id:29, bloco:9, title:"Lendas da Mata", key:"Em", content:
+`Tom: Em
+
+[Intro] Dm Em G7 C7 B7 Em G7 C7 B7
+Em G7 C7 B7 Em
+O saci rodopiou ventania na palhoça
+G7 C7 B7 Em
+Sinhazinha bambeou deu mironga lá na roça
+E7 Am D7 G
+Coisas que o olho não vê, e que a alma pode enxergar
+C7 Am B7 Em
+Zombeteiro, ê caxambu! toque no pé do juá
+E7 Am D7 G
+É mistério a força de crer, fundamentos que vem de lá
+C7 B7 Em
+Bicho do mato some do breu, se escondeu no juremá
+Em B7 Em G7
+Caboclo sabe as lendas da mata
+Em B7 Em
+Caboclo traz a bala de prata
+G Am B7 Em
+Pro uivar da meia noite, lua cheia, madrugada
+G7 C7 B7 Em
+De feitiço e pajelança, faz-se a lenda encantada`},
+
+{ id:30, bloco:9, title:"Dodói, Dodói", key:"Am", content:
+`Tom: Am
+
+Am E7 Am
+Dói, dói, dói, dói, dói
+Dm6
+Um amor faz sofrer
+E7 Am
+Desamor faz chorar
+Am E7 Am
+Dói, dói, dói, dói, dói
+Dm6
+Um amor faz sofrer
+E7 Am A7
+Desamor faz chorar
+Dm G C
+Quem é você pra deitar na minha cama?
+Am Dm6
+Papagaio come milho
+E7 Am A7
+O Periquito leva a fama`},
+
+{ id:31, bloco:9, title:"Oyá", key:"D", content:
+`Tom: D
+
+D A7
+Oyá
+D B7 Em B7
+É o povo de cá pedindo pra não chover
+Em A7 D Em7 D A7
+Nossa gente ilhada precisa sobreviver
+D B7 Em B7
+E levantam-se as mãos, pedindo pra Deus
+Em D Am D7 Am7 D7 G7M
+Já não se vive sem farinha e pirão não há
+G7M F7(9) Bm
+Será que a força da fé que carrega nosso viver
+Am7 D7 G7M
+Pode mover montanhas e joga dentro do mar
+A7(4) A7 D A7(9) D7(9)
+Tanta gente de bem que só tem mal pra dar
+É a nossa oração pedindo pra Deus olhar`},
+
+{ id:32, bloco:9, title:"Outra Ceia", key:"D", content:
+`Tom: D
+
+D6(9)
+Eu tive um sonho bom
+G#°
+Gostoso de sonhar
+Gm7(9) A7 D6(9) A7
+Durou a noite inteira
+D6(9)
+Eu tive um sonho bom
+G#°
+Sonhei com Oxalá
+Gm7(9) A7 D6(9) D7(9)
+Em plena sexta-feira
+Gm7(9) C7 F#m7
+Abri o coração com toda a minha fé
+Em7 A7 D6(9) A7
+Cansado de chorar, rezei
+G9 G#° F#m7 B7
+Que o vento de Iansã soprasse com amor
+E7(9) A7 D6(9)
+Mais justiça de Xangô
+Bm7(9) F#m7
+Que a espada de Ogum ganhasse de uma vez
+Gm7(9) C7 D6(9)
+Batalhas por onde eu passar
+C#m7(5-) F#7(9) Bm7(9)
+A falange atendeu ao meu Pai Oxalá`},
+
+{ id:33, bloco:10, title:"Você Me Vira a Cabeça", key:"F#m", content:
+`Tom: F#m
+
+[Intro] F#m7 E7 D7M F#m | F#m7 E7 D7M C#7
+F#m7 C#(13-)
+Você me vira a cabeça
+F#m7 C#/E
+Me tira do sério
+Bm7
+Destrói os planos
+E4 E
+Que um dia eu fiz pra mim
+A7M
+Me faz pensar
+D7M
+Por que que a vida é assim
+G#m7(5-) C#7
+Eu sempre vou e volto pros seus braços
+F#m7 C#7
+Você não me quer de verdade
+F#m7 C#4(13-)
+No fundo eu sou tua vaidade
+Bm7 E7(9/5-) E7(9)
+Eu vivo seguindo os teus passos
+A7M D7M
+Eu sempre estou presa em teus laços
+G#m7(5-) C#7 F#m7
+É só você chamar, que eu vou
+D7M A/C# Bm7
+Por quê você não vai embora de vez?
+C#7
+Por quê não me liberta dessa paixão?`},
+
+{ id:34, bloco:10, title:"A Loba", key:"F#", content:
+`Tom: F#
+
+Gm Gm7+ Gm7
+Sou doce, dengosa, polida
+Gm6
+Fiel como um cão, sou capaz de te dar minha vida
+Cm Cm7+
+Mas olha, não pise na bola
+Cm7 Cm
+Se pular a cerca eu detono, comigo não rola
+F F7
+Sou de me entregar de corpo e alma à paixão
+A#7M Gm
+Mas não tente nunca enganar meu coração
+Am7(5-) D# E° D4(7) D7
+Amor para mim só vale assim, sem precisar pedir perdão
+Gm Gm7+
+Adoro sua mão atrevida
+Cm9 Cm7+
+Mas saiba que eu não sou boba
+Cm7 Cm
+E por baixo da pele de gata eu escondo uma loba
+G D/F#
+Sou mulher de te deixar se você me trair
+Am
+Me balança mas não me destrói
+D7
+Com minha emoção`},
+
+{ id:35, bloco:10, title:"Juízo Final", key:"Eb", content:
+`Tom: Eb
+
+Gm Ab7 D7
+O sol... há de brilhar mais uma vez
+Cm Eb7 D7
+A luz... há de chegar aos corações
+Gm Ab7 D7
+O mal... será queimada a semente
+Cm D7 Gm G7
+O amor... será eterno novamente
+Cm D7 Eb7 D7
+É o Juízo Final, a história do bem e do mal
+Cm D7 Eb7 D7
+Quero ter olhos pra ver, a maldade desaparecer
+Gm Ab7 D7
+O sol... há de brilhar mais uma vez
+Cm Eb7 D7
+A luz... há de chegar aos corações
+Gm Ab7 D7
+O mal... será queimada a semente
+Cm D7 Gm G7
+O amor... será eterno novamente (3x)`},
+
+{ id:36, bloco:10, title:"Falsa Consideração", key:"C", content:
+`Tom: C
+
+G Bm7
+Agora eu sei que o amor que você prometeu
+Dm7 E7 Am
+Não foi igual ao que você me deu, era mentira o que você jurou
+G7
+C D7 Bm7 E7
+Mas não faz mal, eu aprendi que não se deve crer
+Am
+Em tudo aquilo que alguém nos diz
+G Bm7
+Mas tudo bem, eu sei que um dia vai e outro vem
+Dm7 E7 Am G7
+Você ainda há de encontrar alguém pra lhe fazer o que você me fez
+C D7 Bm7
+E aí na hora do sufoco sei você vai me procurar
+E7 Am
+Com a mesma conversa que um dia me fez apaixonar
+D7 Dm G7 C D7
+Por alguém de uma falsa consideração
+Bm7 E7
+Que eu estou numa boa
+Am D7 G D7
+Mas há males na vida que vem para o bem`},
+
+{ id:37, bloco:11, title:"Domingo", key:"F", content:
+`Tom: F
+
+F7+ Am7
+Domingo
+D7(9-)
+Quero te encontrar
+Cm F5+/7 Bb7+
+E desabafar todo o meu sofrer
+Bbm6 Eb7/9
+Estar a seu lado
+Am7 D7(9-)
+E esquecer de tudo
+G7/9
+Tudo o que o amor
+Gm7 C7(9-)
+Até hoje nos fez sofrer
+F7+
+Esquecer a briga
+Am7
+Que deixou ferida
+Cm F5+/7 Bb7+
+E que até hoje não cicatrizou
+Bbm6 Eb7/9
+Amar você é bom demais
+Am7 D7(9-)
+É tudo que eu posso querer
+Gm7 C7(9-)
+Pior é te perder
+[REFRÃO]
+F7+
+Cola teu rosto no meu
+Am7
+Chega mais perto de mim
+Cm F5+/7 Bb7+
+Faça de conta que eu sou teu namorado`},
+
+{ id:38, bloco:11, title:"Favo de Mel", key:"G", content:
+`Tom: G
+
+G7M G6 F#m7(5-) B7 Em
+Favo de mel, doce paixão, vejo teu céu
+C#m7(5-) F#7 Bm E7(9) A7M A6
+Sinto esse seu batom, viajo na ilusão
+Am7 D7(9) G
+Querendo te encontrar
+G6 F#m7(5-) B7 Em
+E dizer nessa canção, no mesmo tom
+C#m7(5-) F#7 Bm E7(9) A7M A6
+Seguir sua direção pra gente não se perder
+Am7 D7 Dm G7
+Seu toque me dá prazer, prazer
+C7M F7(9)
+Me faz um cafuné sim, revele o seu segredo
+G7M Am7 Bm7 E7
+Se entregue sem pensar, vem me cobrir de beijos
+Am Bm C7M D7(13) G7M G6
+No fundo meu desejo, é poder ser seu novo amor`},
+
+{ id:39, bloco:11, title:"Quando o Sol Nascer", key:"Am", content:
+`Tom: Am
+
+F#m7(b5) Fm6
+Deixa eu entrar no seu mundo
+Em7
+Mudar sua vida
+Em7/4 A7(b9)
+Te fazer bem mais feliz
+Dm7/9 G7/4 G7 C7M G/B
+Sinto a cada segundo meu amor crescer
+F7+ Fm6
+O que ele tem que eu não tenho
+Em7
+Me diz que eu mudo
+Em7(b5) A7(b9)
+Eu quero você pra mim
+Dm7/9 G7/13 G7(b9) C6(9)
+Olha eu te amo tanto, não me deixe assim
+F7+ Bb7/9
+Quando o sol nascer
+Am7 Am7/G D/F# G7/4 Gm7 Csus
+Eu vou te procurar, abrir meu coração só pra você entrar`},
+
+{ id:40, bloco:12, title:"24 Horas de Amor", key:"A", content:
+`Tom: A
+
+[Intro] A7+ Em A7+ C D
+A7
+D7+ E/D
+Amor amigo
+C#m7 F#7/4 F#7
+Não sei porque
+Bm7 E7/9
+Fugiu de mim sem me dizer pra onde foi
+A7+ A6 Em7 A7
+Cadê você
+D6/9 E/D
+Eu te procuro, sem rancor
+C#m7 F#7/9
+Mas não te vejo, onde for
+Bm
+É muito duro
+E7
+É inseguro
+Em7 A7
+O meu desejo
+D
+É te amar
+C#m7 F#7/4 F#7
+24 horas sem cessar, meu grande amor
+Bm
+Longe de ti, não sei sorrir
+E7/9 Em
+Sinto até saudade de mim
+A7/4 A7
+Diga que não chegou ao fim`},
+
+{ id:41, bloco:12, title:"Telegrama", key:"A", content:
+`Tom: A
+
+[Intro] A E/G# F#m A B7
+E7M B/D#
+Ah, que saudade de você
+Cº C#m7
+Estou a te esperar
+A7M B/A F#m B7
+A dor ainda está no meu peito
+A7M A6 B/A
+Ah, as marcas de batom
+G#7 C#m7
+Num casaco de vison
+A7M A/B Bm D/E E7
+Aquele beijo imaginar
+[Refrão]
+Bm7
+Me liga
+E7(13) A7M
+Me manda um telegrama
+Am6 G#m7 G#7(5+)
+Uma carta de amor, de amor
+C#m7
+Que eu vou até lá
+F#7
+Eu vou, eu vou`},
+
+{ id:42, bloco:12, title:"Separação", key:"C", content:
+`Tom: C
+
+[Intro] C7M(9) B C C# Dm
+Dm
+Melhor assim
+G7(13) Em7
+A gente já não se entendia muito bem
+A7 Dm
+E a discussão já era a coisa mais comum
+Dm
+Melhor assim
+G7(13) Em7
+Pra que fingir se você já não tem amor
+A7 Dm
+Se teus desejos já não me procuram mais
+Dm G7(13) Em7
+De coração eu só queria que você fosse feliz
+F/G G7(13) C7M(9) A7
+Que outra consiga te fazer o que eu não fiz
+F
+Mas vá embora
+Dm Em7
+Antes que a dor machuque mais meu coração
+A7(-13) A7 Dm7(9)
+Antes que eu morra me humilhando de paixão
+G7(13) Gm6 C7(9) C/Bb
+Que me ajoelhe te implorando pra ficar comigo`},
+
+{ id:43, bloco:12, title:"Gamei", key:"A", content:
+`Tom: A
+
+Cm7 F7(9)
+Quando eu vi
+Bb7(9) Bb7(9-)
+Me amarrei
+Eb7M
+No teu sorriso sonhei
+Dm7(5-) G7(13-)
+Eu sonhava que o sol
+Cm7 Cm7/Bb
+Namorava o luar
+Aº
+Que as nuvens do céu
+Dm7(5-) G7(13-)
+Beijavam o azul do mar
+F7M F6
+Gamei, no corpo bronzeado
+Bbm7
+Ganhei, um beijo assanhado
+Am7 D7(9)-
+Fiquei, todinho arrepiado
+Gm7 C7(9)
+Parei, surpreso e acanhado
+F7M F6
+Dancei, de rostinho colado
+Bbm7
+Olhei, bumbum arrebitado
+Am7 D7(9)-
+Gostei, perfume importado
+Gm7 C7(9)
+Amei, já sou teu namorado
+F7M Dm7(5-) G7(13-) Cm7
+Gamei`},
+
+{ id:44, bloco:13, title:"Radar", key:"Dm", content:
+`Tom: Dm
+
+Dm Am
+Olhando nossas fotos do passado
+O perigo estava lado a lado
+Dm
+Eu não vi
+Dm
+Eu entendo tudo isso agora
+Que não tem vilão na nossa história
+Am
+Eu não vi
+Dm Am
+E estou aqui sem saber o que falar
+Dm
+Para a minha vida você estava fora do radar
+Am
+Longe de mim vai piorar (yeah)
+Dm
+Baby, você não viu
+Am
+O que você perdeu
+Dm
+O que você perdeu
+Eu, eu, eu
+Am
+Eh-eh-eu, eu, eu`},
+
+{ id:45, bloco:13, title:"Timidez", key:"C", content:
+`Tom: C
+
+Am Am/G Bm5-/7 E5+
+Timidez
+E7/9- A F#m7 Bm
+É minha covardia
+Am Dm E4/7 A7+ A6
+Outra vez
+G7/13 Aº Cº
+É dia de agonia
+Dm A7+ A6
+Sem você
+G/F C/E G#5-/7 C#7
+Noite fria, solidão
+Am Am/G Bm5-/7 C#m
+Esconde o meu desejo
+E5+ F#7/13 F#7/13-
+Só me fez chorar
+Am Bm E4/7
+Sorriso que não vejo
+G7/13 Dm A7+ A6
+Nem um beijo
+Am Dm
+Te desejo
+E5+ F7+ E7/9-
+Sem dizer pra você
+Te amo
+G/A A7
+Com você`},
+
+{ id:46, bloco:13, title:"Tu Mandas no Meu Coração", key:"A", content:
+`Tom: A
+
+A9 A9(13-) A6/9
+Não sei quanto tempo o tempo deixou
+A9(13-) A9
+De achar um tempo para o nosso amor
+A9(13-) A6/9
+Quem de nós fugiu e nunca se encontrou
+A7(4/9) A7(4/9-) D9
+A fúria do tempo não nos perdoou
+G7(4/9)
+Nosso passatempo foi só recordar
+C#m7
+Que existia tempo pra gente sonhar
+F#7 F7M/9
+Mas lá fora o tempo agora se fechou
+E7/4 E7 A9
+Será que o tempo da gente acabou
+F#m7 Bm7/9
+Você bem sabe que aqui dentro
+Dm7 F7M C7M Bm7 E7
+Tu mandas no meu coração`},
+
+{ id:47, bloco:14, title:"Não Quero Dinheiro", key:"F#m", content:
+`Tom: F#m
+
+[POUT-POURRI — NÃO QUERO DINHEIRO | PAÍS TROPICAL | GOSTAVA TANTO DE VOCÊ | VOCÊ | DESCOBRIDOR]
+
+A F#m
+Vou pedir pra você voltar
+A F#m
+Vou pedir pra você ficar
+E4 A E4
+Eu te amo, eu te quero bem
+D E/D
+A semana inteira, fiquei esperando
+C#m F#m
+Pra te ver sorrindo, pra te ver cantando
+Bm E4
+Quando a gente ama, não pensa em dinheiro
+A A7(4)
+Só se quer amar, se quer amar
+D E/D
+De jeito maneira, não quero dinheiro
+C#m F#m
+Quero amor sincero, isto é o que espero
+Bm
+Grito ao mundo inteiro
+E4 A
+Não quero dinheiro, eu só quero amar`},
+
+{ id:48, bloco:14, title:"País Tropical", key:"Em", content:
+`Tom: Em
+
+Em7 D C D7 Em7
+Moro num país tropical
+D C D7 Em7
+Abençoado por Deus
+D C D7 Em7
+E bonito por natureza
+D C
+Mas que beleza
+D7 Em7 D C
+Em fevereiro
+D7 Em7 D C
+Tem carnaval
+D7
+Eu tenho um carro
+Em7 D G7
+E uma guitarra cantante
+C
+Sou Flamengo
+D7 G7
+E minha nega continua deliciante`},
+
+{ id:49, bloco:14, title:"Gostava Tanto de Você", key:"A", content:
+`Tom: A
+
+[Intro] A7M E7(4/9) A7M E7(4/9)
+A7M Bm7
+Não sei por que você se foi
+C#m7
+Quantas saudades eu senti
+Bm7
+E de tristezas vou viver
+A7M
+E aquele adeus não pude dar
+Bm7
+Você marcou na minha vida
+C#m7
+Viveu, morreu na minha história
+[REFRÃO]
+A7M
+E eu
+E7(4/9) A7M
+Gostava tanto de você
+E7(4/9) C#m7 Bm7
+Gostava tanto de você
+A7M Bm7
+Eu corro, fujo desta sombra
+C#m7
+Em sonho, vejo este passado
+Bm7
+E na parede do meu quarto
+C#m7
+Ainda está o seu retrato`},
+
+{ id:50, bloco:14, title:"Você", key:"Am", content:
+`Tom: Am
+
+Am Bm7 E7(4)
+De repente a dor
+Am/G A
+De esperar terminou
+Dm Dm7
+E o amor veio enfim
+Dm C#m7
+Eu que sempre sonhei
+E7 Bm7 E7(4)
+Mas não acreditei muito em mim
+Am
+Vi o tempo passar
+Am/G
+O inverno chegar
+Dm Dm7
+Outra vez, mas desta vez
+Dm
+Todo pranto sumiu
+E7
+Meu amor
+A
+Você
+Bm7
+É mais do que sei
+C#m7
+É mais que pensei
+Bm7 E7(4)
+É mais que esperava, baby
+A D
+Sou feliz agora
+A D C#m7
+Não não vá embora não`},
+
+{ id:51, bloco:14, title:"O Descobridor dos Sete Mares", key:"Am", content:
+`Tom: Am
+
+[Intro] Am7 D7/9
+Am7 D7(9)
+Uma luz azul me guia
+Am7 D7(9)
+Com a firmeza e os lampejos do farol
+Am7 D7(9)
+E os recifes lá de cima
+Am7 D7(9)
+Me avisam dos perigos de chegar
+Am7 D7(9)
+Angra dos Reis e Ipanema
+Am7 D7(9)
+Iracema, Itamaracá
+Am7 D7(9)
+Porto Seguro, São Vicente
+Am7 D7(9)
+Braços abertos sempre a esperar
+[REFRÃO]
+Em7 A7
+Pois bem cheguei
+Dm7
+Quero ficar bem à vontade
+G Em7 A7
+Na verdade eu sou assim
+Dm7
+Descobridor dos sete mares
+G
+Navegar eu quero`},
+
+{ id:52, bloco:15, title:"Zona de Perigo", key:"F", content:
+`Tom: F
+
+Gm
+Sensacional o jeito que ela faz comigo
+Bb
+É fora do normal, estou na zona de perigo
+F
+Foi beijando minha boca com a mão na minha nuca
+C Bb F/A Gm
+Essa bebê provoca, a bunda dela pulsa
+Gm
+Vem deslizando (vai)
+Que eu tô gostando (vem)
+Bb
+Ela me pede (mais)
+Não para, não (meu bem)
+F
+E vem sentando gostosinho pro pai
+C
+E vem jogando de ladinho, neném`},
+
+]; /* fim songs2024[] */
+
+/* ══════════════════════════════════════════
+   🎵 REPERTÓRIO 2025 (REV.) — com novas músicas
+   ══════════════════════════════════════════ */
+const songs3extra = [
+{ id:0, bloco:0, title:"Canto das Três Raças", key:"Am", content:
+`Tom: Am
+
+[Intro] Am E7 Am D7 Bm7(b5) E7 Am E7
+
+Am7 Bm5-/7 E5+/7 Am7 F7 E7
+Ninguém ouviu um soluçar de dor no canto do Brasil
+Dm Am7 F7
+Um lamento triste sempre ecoou
+E7 Am7
+Desde que o índio guerreiro foi pro cativeiro e de lá cantou
+Dm E7 Am7 Bm5-/7 Am/C
+Negro entoou um canto de revolta pelos ares
+Dm Am7 F7 E7
+No Quilombo dos Palmares, onde se refugiou
+Dm Am7 Bm5-/7 Am/C F7
+Fora a luta dos Inconfidentes pela quebra das correntes
+E7
+Nada adiantou
+Dm Am7
+E de guerra em paz, de paz em guerra
+Nos sangrou mais nossa terra
+E7 Am7
+Até que um dia enfim, a lei foi assim, aboliu
+Am7
+É, foi ruim a bessa
+Mas pensei depressa numa solução
+Para a depressão, fui ao violão`},
+
+{ id:1, bloco:0, title:"Sorriso Aberto", key:"C", content:
+`Tom: C
+
+Intro. Bm7(5b) E7 Am Am/G B7 E7
+
+Am G
+Lá laiá laiá laiá
+F7
+Laiá laiá laiá
+E7
+Laiá laiá laiá
+Dm E7 Am
+Lá laiá laiá laiá laiá samba aqui, samba ali, samba lá
+Am Dm Am E/G#
+Lá laiá laiá laiá laiá
+Am E7 Am E7
+Lá laiá laiá laiá laiá, pois é...
+Am G
+É, foi ruim a bessa
+F7
+Mas pensei depressa
+Bm7(b5) E7 Am
+Numa solução para a depressão, fui ao violão
+G
+Fiz alguns acordes
+F7
+Mas pela desordem
+Bm7(b5) E7
+Percebi que não ia resolver
+Am G
+Logo, eu com meu sorriso aberto
+F7 Bm7(b5) E7
+E o paraíso perto, pra vida melhorar
+Am G
+Malandro desse tipo que balança mas não cai
+F7
+De qualquer jeito vai
+Bm7(b5) E7
+Ficar bem mais legal
+F7 E7 Am (F7 E7)
+Pra nivelar a vida em alto astral`},
+
+{ id:2, bloco:0, title:"Tá Escrito", key:"F", content:
+`Tom: F
+
+F
+Quem cultiva a semente do amor
+C Bb
+Segue em frente não se apavora
+F Dm
+Se na vida encontrar dissabor
+Gm C7
+Vai saber esperar sua hora
+F
+Quem cultiva a semente do amor
+C Bb
+Segue em frente não se apavora
+F Dm
+Se na vida encontrar dissabor
+Gm C7 F F7
+Vai saber esperar sua hora
+Bb
+Às vezes a felicidade demora a chegar
+F C Am D7
+Aí é que a gente não pode deixar de sonhar
+Gm C7
+Guerreiro não foge da luta, não pode correr
+F Am Cm F7
+Ninguém vai poder atrasar quem nasceu pra vencer
+Bb
+É dia de sol mas o tempo pode fechar
+F C Am D7
+A chuva só vem quando tem que molhar
+Gm C7 F Dm
+Na vida é assim, tá escrito`},
+
+{ id:56, bloco:17, title:"Bom", key:"Bb", content:
+`Tom: Bb
+
+Dm7 Am7
+Hmm, hmm, hmm, é bom, é bom
+Dm7 Am7
+Hmm, hmm, hmm, é bom, é bom
+Dm7
+Uma taça de chandon (bom)
+Am7
+Um calor no edredom (bom)
+Cê tirando meu batom é bom, bom, bom, bom, bom
+Dm7
+Uma taça de chandon (bom)
+Am7
+Um calor no edredom (bom)
+Cê tirando meu batom é bom, bom, bom
+Dm7
+Relaxa que eu quero você
+Relaxa que eu quero prazer
+Am7
+Relaxa que a noite promete e
+Naturalmente vai acontecer
+Dm7
+Eu tô ficando louca, arrepiando toda
+Am7
+Eu tô querendo te pegar gostoso
+Fazer você pirar daquele jeito
+Bom, bom, bom`},
+];
+
+// Mescla: músicas extras (bloco 0) + todas de 2024 + novas (bloco 17)
+// _rep:2 marca que pertencem ao 3º repertório para navegação cross-rep
+const songs3 = [
+  ...songs3extra.filter(s => s.bloco === 0).map(s => ({...s, _rep:2})),
+  ...songs2024.map((s, i) => ({...s, id: i + 3, _rep:2})),
+  ...songs3extra.filter(s => s.bloco === 17).map(s => ({...s, _rep:2})),
+];
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB8XorTQASMD51JbYEXIBTW6PYeq7BGRTU",
+  authDomain: "canto-das-pretas.firebaseapp.com",
+  databaseURL: "https://canto-das-pretas-default-rtdb.firebaseio.com",
+  projectId: "canto-das-pretas",
+  storageBucket: "canto-das-pretas.firebasestorage.app",
+  messagingSenderId: "454913796929",
+  appId: "1:454913796929:web:44550491a32d50cc8bcfc0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ══════════════════════
+   STATE
+   ══════════════════════ */
+let selectedId      = null;
+let broadcastId     = null;
+let activeRep       = 0;
+let fontSize        = parseFloat(localStorage.getItem('cdp-fs') || '1.1');
+let transposeOffset = 0;
+let activeTab       = 'rep';
+let notesTimer      = null;
+let notesOpen       = false;
+
+const repertoires   = [songs, songs2024, songs3];
+let currentSongs    = songs;
+
+/* Firebase refs */
+const songRef       = db.ref('currentSong');
+const historyRef    = db.ref('history');
+const setlistsRef   = db.ref('setlists');
+const activeSlRef   = db.ref('activeSetlistId');
+const notesRef      = db.ref('notes');
+const favRef        = db.ref('favorites');
+const rehRef        = db.ref('rehearsal');
+
+/* Local caches */
+let historyCache    = [];
+let setlistsCache   = {};
+let activeSetlistId = null;
+let expandedSetlistId = null;
+let modalCallback   = null;
+let favCache        = {};
+let rehCache        = {};
+let notesCache      = {};
+
+/* ══════════════════════
+   RICH SONG METADATA
+   Genre: Samba Raiz | Pagode | Samba Partido | Afro | Forró | Axé | MPB | Pop
+   Mood:  Festivo | Romântico | Saudade | Identidade | Espiritual | Reflexivo | Animado
+   ══════════════════════ */
+const songMeta = {
+  "O Bem":                    ['Pagode',       'Festivo'],
+  "Nos Braços da Batucada":   ['Samba Raiz',   'Festivo'],
+  "Retalhos de Cetim":        ['Samba Raiz',   'Saudade'],
+  "Madureira":                ['Pagode',       'Identidade'],
+  "Já É":                     ['Pagode',       'Festivo'],
+  "Moleque Atrevido":         ['Samba Raiz',   'Identidade'],
+  "Identidade":               ['Samba Partido','Identidade'],
+  "Partido Alto":             ['Samba Partido','Festivo'],
+  "Cabide":                   ['Pagode',       'Animado'],
+  "Quando a Gira Girou":      ['Pagode',       'Festivo'],
+  "Alma Boêmia":              ['Samba Raiz',   'Saudade'],
+  "Só Depois":                ['Pagode',       'Romântico'],
+  "Deixa Acontecer":          ['Pagode',       'Animado'],
+  "Deixa Alagar":             ['Pagode',       'Festivo'],
+  "Não Deixa o Samba Morrer": ['Samba Raiz',   'Festivo'],
+  "Você Me Vira a Cabeça":    ['Pagode',       'Romântico'],
+  "Sem Ataque e Sem Defesa":  ['Pagode',       'Romântico'],
+  "Pedaço de Ilusão":         ['Samba Raiz',   'Saudade'],
+  "Alguém Me Avisou":         ['Samba Raiz',   'Festivo'],
+  "Água de Chuva no Mar":     ['Pagode',       'Festivo'],
+  "Vou Festejar":             ['Samba Raiz',   'Festivo'],
+  "La Belle de Jour/Mar e Sol":['MPB',         'Romântico'],
+  "Eu Só Quero um Xodó":      ['MPB',          'Saudade'],
+  "Anunciação":               ['MPB',          'Reflexivo'],
+  "Ai Que Saudade D'Ocê":     ['Forró',        'Saudade'],
+  "Banho de Cheiro":          ['Forró',        'Festivo'],
+  "Vara de Família":          ['Pagode',       'Animado'],
+  "Tia Nastácia":             ['Samba Raiz',   'Saudade'],
+  "Mesmo Manto":              ['Samba Raiz',   'Saudade'],
+  "Luz do Repente/Feirinha da Pavuna/Caxambu":['Samba Raiz','Festivo'],
+  "A Sorrir/Sol Nascerá":     ['Samba Raiz',   'Reflexivo'],
+  "Sorriso Negro":            ['Samba Raiz',   'Identidade'],
+  "Acreditar":                ['Samba Raiz',   'Festivo'],
+  "Sonho Meu":                ['Samba Raiz',   'Reflexivo'],
+  "Todo Menino é um Rei":     ['Samba Raiz',   'Identidade'],
+  "Preto Cor Preta":          ['Samba Partido','Identidade'],
+  "Coisa de Pele":            ['Pagode',       'Romântico'],
+  "Meu Castelo":              ['Pagode',       'Romântico'],
+  "Brilho no Olhar":          ['Pagode',       'Romântico'],
+  "Problema Emocional":       ['Pagode',       'Romântico'],
+  "Show Tem que Continuar":   ['Samba Raiz',   'Festivo'],
+  "Quem me Protege Não Dorme":['Afro',         'Espiritual'],
+  "Ogum":                     ['Afro',         'Espiritual'],
+  "Reza/É D'Oxum":            ['Afro',         'Espiritual'],
+  "Oyá":                      ['Afro',         'Espiritual'],
+  "Lendas da Mata":           ['Afro',         'Espiritual'],
+  "Radar":                    ['Pop',          'Animado'],
+  "Chupa Toda":               ['Axé',          'Festivo'],
+  "Cria da Ivete":            ['Axé',          'Festivo'],
+  "Energia de Gostosa":       ['Axé',          'Festivo'],
+  "Banho de Folhas":          ['Pagode',       'Festivo'],
+  "Não Quero Dinheiro":       ['Samba Raiz',   'Romântico'],
+  "Gostava Tanto de Você":    ['MPB',          'Saudade'],
+  "Descobridor dos Sete Mares":['MPB',         'Festivo'],
+  // 2024
+  "Arrasta a Sandalha":       ['Samba Raiz',   'Festivo'],
+  "Sol Nascerá":              ['Samba Raiz',   'Reflexivo'],
+  "Fogo de Paixão":           ['Samba Raiz',   'Romântico'],
+  "Tendência":                ['Samba Raiz',   'Romântico'],
+  "Ainda é Tempo":            ['Pagode',       'Romântico'],
+  "Avião":                    ['Pop',          'Romântico'],
+  "Flor de Lis":              ['MPB',          'Saudade'],
+  "Para Ver as Meninas":      ['Samba Raiz',   'Reflexivo'],
+  "Lucidez":                  ['Pagode',       'Romântico'],
+  "Água da Minha Sede":       ['Pagode',       'Romântico'],
+  "Castelo de um Quarto Só":  ['Samba Raiz',   'Reflexivo'],
+  "Trilha do Amor":           ['Pagode',       'Romântico'],
+  "Cheia de Manias":          ['Pagode',       'Animado'],
+  "Nossa Escola":             ['Samba Raiz',   'Identidade'],
+  "Meu Lugar":                ['Pagode',       'Identidade'],
+  "Será que é Amor":          ['Pagode',       'Romântico'],
+  "O Que é o Amor":           ['Pagode',       'Romântico'],
+  "A Sós":                    ['Pagode',       'Romântico'],
+  "Tropicana":                ['MPB',          'Festivo'],
+  "O Bêbado e a Equilibrista":['MPB',          'Reflexivo'],
+  "Dodói, Dodói":             ['Samba Partido','Animado'],
+  "Outra Ceia":               ['Afro',         'Espiritual'],
+  "A Loba":                   ['Pagode',       'Animado'],
+  "Juízo Final":              ['Samba Raiz',   'Reflexivo'],
+  "Falsa Consideração":       ['Pagode',       'Saudade'],
+  "Domingo":                  ['MPB',          'Romântico'],
+  "Favo de Mel":              ['Pagode',       'Romântico'],
+  "Quando o Sol Nascer":      ['Pagode',       'Romântico'],
+  "24 Horas de Amor":         ['Pagode',       'Saudade'],
+  "Telegrama":                ['Pagode',       'Saudade'],
+  "Separação":                ['Pagode',       'Saudade'],
+  "Gamei":                    ['Pagode',       'Animado'],
+  "Timidez":                  ['Pagode',       'Romântico'],
+  "Tu Mandas no Meu Coração": ['Pagode',       'Saudade'],
+  "País Tropical":            ['MPB',          'Festivo'],
+  "Você":                     ['Pop',          'Romântico'],
+  "O Descobridor dos Sete Mares":['MPB',       'Festivo'],
+  "Zona de Perigo":           ['Pop',          'Animado'],
+};
+function getMeta(song)  { return songMeta[song.title] || ['Samba Raiz','Festivo']; }
+function getGenre(song) { return getMeta(song)[0]; }
+function getMood(song)  { return getMeta(song)[1]; }
+
+/* ══════════════════════
+   TRANSPOSITION
+   ══════════════════════ */
+const NOTES_S = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTES_F = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const FLAT_ROOT = new Set(['F','Bb','Eb','Ab','Db','Gb','Dm','Gm','Cm','Fm','Bbm','Ebm']);
+
+function noteIdx(n) {
+  let i = NOTES_S.indexOf(n); if (i>=0) return i;
+  return NOTES_F.indexOf(n);
+}
+function transposeNote(n, st, flat) {
+  const i = noteIdx(n); if (i<0) return n;
+  const ni = ((i+st)%12+12)%12;
+  return (flat ? NOTES_F : NOTES_S)[ni];
+}
+function transposeToken(tok, st, flat) {
+  const m = tok.match(/^([A-G][b#]?)(.*)$/);
+  if (!m) return tok;
+  let [,root,suf] = m;
+  const tr = transposeNote(root, st, flat);
+  // Slash bass note: only if /[A-G]
+  suf = suf.replace(/\/([A-G][b#]?)/, (_,b) => '/'+transposeNote(b,st,flat));
+  return tr + suf;
+}
+function transposeContent(content, st) {
+  if (!st) return content;
+  const lines = content.split('\n');
+  return lines.map(line => {
+    const t = line.trim();
+    if (!t || t.startsWith('Tom:') || t.startsWith('[') || t.startsWith('(') || t.startsWith('▪') || t.startsWith('❖')) return line;
+    if (isChordLineSimple(t)) {
+      return line.replace(/\b([A-G][b#]?(?:m|M|maj|min|dim|aug|sus|add|°)?[0-9]?[^/\s]*(?:\/[A-G][b#]?)?)/g, tok => {
+        if (/^[A-G]/.test(tok)) return transposeToken(tok, st, FLAT_ROOT.has(transposeNote(tok[0]+(tok[1]==='b'||tok[1]==='#'?tok[1]:''),st,false)));
+        return tok;
+      });
+    }
+    return line;
+  }).join('\n');
+}
+function isChordLineSimple(line) {
+  const toks = line.trim().split(/\s+/).filter(t=>t.length&&t.length<=14);
+  if (!toks.length) return false;
+  let h=0;
+  for (const t of toks) if (/^[A-G][b#]?/.test(t)) h++;
+  return h>=1 && h/toks.length>=0.5;
+}
+function transpose(st) {
+  transposeOffset = st === 0 ? 0 : transposeOffset + st;
+  if (selectedId !== null) {
+    const song = currentSongs.find(s => s.id === selectedId);
+    if (song) {
+      document.getElementById('song-content').textContent = transposeContent(song.content, transposeOffset);
+      updateTransposeDisplay(song);
+    }
+  }
+}
+
+/* ══════════════════════
+   REPERTOIRE SWITCH
+   ══════════════════════ */
+const blocoNames2025 = {1:'Bloco 1',2:'Bloco 2',3:'Bloco 3',4:'Bloco 4 — Forrogodê',5:'Bloco 5',6:'Bloco 6',7:'Bloco 7',8:'Bloco 8',9:'Bloco 9',10:'Bloco Final'};
+const blocoNames2024 = {1:'Abertura',2:'Bloco 2',3:'Bloco 3',4:'Bloco 4',5:'Bloco 5',6:'Bloco 6',7:'Bloco Arlindo Cruz',8:'Bloco 8',9:'Bloco 9',10:'Bloco Alcione',11:'Bloco 11',12:'Bloco Exaltasamba',13:'Bloco 13',14:'Pout-Pourri Final',15:'Extra'};
+const blocoNames3    = {0:'Aberturas',1:'Bloco 1',2:'Bloco 2',3:'Bloco 3',4:'Bloco 4',5:'Bloco 5',6:'Bloco 6',7:'Bloco Arlindo Cruz',8:'Bloco 8',9:'Bloco 9',10:'Bloco Alcione',11:'Bloco 11',12:'Bloco Exaltasamba',13:'Bloco 13',14:'Pout-Pourri',15:'Extra',17:'Novas'};
+function getBlocoNames() { return activeRep===0?blocoNames2025:activeRep===1?blocoNames2024:blocoNames3; }
+
+function switchRepertoire(n) {
+  activeRep = n;
+  currentSongs = repertoires[n];
+  selectedId = null;
+  transposeOffset = 0;
+  document.querySelectorAll('.rep-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+  document.getElementById('welcome').style.display = '';
+  document.getElementById('song-display').classList.remove('on');
+  document.getElementById('broadcast-btn').disabled = true;
+  document.getElementById('btn-prev').disabled = true;
+  document.getElementById('btn-next').disabled = true;
+  document.getElementById('search-input').value = '';
+  document.getElementById('key-filter').value = '';
+  buildList();
+}
+
+/* ══════════════════════
+   SIDEBAR TABS
+   ══════════════════════ */
+/* ══════════════════════
+   BUILD LIST
+   ══════════════════════ */
+
+
+function makeItem(song) {
+  const el = document.createElement('div');
+  el.className = 'song-item';
+  if (song.id === selectedId) el.classList.add('selected');
+  if (song.id === broadcastId && activeRep===0) el.classList.add('live-song');
+  const fk = `${activeRep}-${song.id}`;
+  const isFav = !!favCache[fk];
+  const reh   = rehCache[fk] || '';
+  const played = historyCache.some(h => h.id===song.id && h.repId===activeRep && isPlayedInSession(h));
+  const badges = `<span class="song-badges">${isFav?'<span class="badge-fav">★</span>':''}${reh?`<span class="badge-reh ${reh}"></span>`:''}${played?'<span class="badge-hist">✓</span>':''}</span>`;
+  el.innerHTML = `<span class="song-name">${song.title}</span><span class="song-key">${song.key}</span>${badges}`;
+  el.addEventListener('click', ()=>selectSong(song.id, false));
+  return el;
+}
+
+/* ══════════════════════
+   DISPLAY SONG
+   ══════════════════════ */
+function selectSong(id, fromRemote) {
+  const song = currentSongs.find(s=>s.id===id);
+  if (!song) return;
+  selectedId = id;
+  transposeOffset = 0;
+  document.getElementById('transpose-val').textContent = '±0';
+  const bn = getBlocoNames();
+
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('song-display').classList.add('on');
+  document.getElementById('song-title').textContent     = song.title;
+  const detectedKey = detectFirstChord(song.content) || song.key;
+  document.getElementById('song-key-tag').textContent   = 'Tom: ' + detectedKey;
+  const bpm = getSongBPM(song);
+  document.getElementById('song-bloco-tag').textContent = (bn[song.bloco]||'Bloco '+song.bloco)+(bpm?`  •  ${bpm} BPM`:'');
+  const author = getAuthor(song);
+  const authorEl = document.getElementById('song-author-tag');
+  authorEl.textContent = author ? '— ' + author : '';
+  // Restart metronome with new BPM
+  if (metronomeActive && bpm) startMetronome(bpm);
+  // Stop teleprompter on song change
+  if (teleprompting) toggleTeleprompter();
+  document.getElementById('song-content').textContent   = song.content;
+  document.getElementById('song-content').style.fontSize = fontSize + 'rem';
+  updateTransposeDisplay(song);
+  document.getElementById('broadcast-btn').disabled = false;
+  document.getElementById('content-area').scrollTop = 0;
+
+  // Nav buttons
+  const idx = currentSongs.findIndex(s=>s.id===id);
+  document.getElementById('btn-prev').disabled = idx<=0;
+  document.getElementById('btn-next').disabled = idx>=currentSongs.length-1;
+
+  // Toolbar state
+  const fk = `${activeRep}-${id}`;
+  updateFavBtn(fk);
+  updateRehBtns(fk);
+
+  // Notes
+  loadNotes(fk);
+
+  // Repeat alert
+  const played = historyCache.some(h=>h.id===id&&h.repId===activeRep);
+  document.getElementById('repeat-alert').classList.toggle('show', played);
+
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+  showSuggestions(song);
+
+  if (!fromRemote && window.innerWidth<=820) toggleSidebar(false);
+}
+
+/* ══════════════════════
+   SUGGESTIONS (RICH)
+   ══════════════════════ */
+function pickRandom(arr, exclude=[]) {
+  const pool = arr.filter(s => !exclude.includes(s.id));
+  if (!pool.length) return null;
+  // rotate by minute to vary suggestion without full randomness
+  return pool[Math.floor(Date.now()/60000) % pool.length];
+}
+
+function showSuggestions(song) {
+  const panel = document.getElementById('suggestion-panel');
+  const cards = document.getElementById('sug-cards');
+  cards.innerHTML = '';
+  const bn = getBlocoNames();
+  // Include all three repertoires for cross-suggestions
+  const allSongs = [...songs.map(s=>({...s,_rep:0})), ...songs2024.map(s=>({...s,_rep:1})), ...songs3];
+  const others = allSongs.filter(s => !(s.id===song.id && (s._rep||0)===activeRep));
+  const idx = currentSongs.findIndex(s=>s.id===song.id);
+
+  const usedIds = [];
+
+  // 1. Sequência — próxima no repertório
+  const seqSong = currentSongs[idx+1] || (idx>0 ? currentSongs[idx-1] : null);
+  if (seqSong) usedIds.push(seqSong.id);
+
+  // 2. Mesmo tom
+  const songKey = detectFirstChord(song.content) || song.key;
+  const keyPool = others.filter(s => {
+    const k = detectFirstChord(s.content) || s.key;
+    return k === songKey && !usedIds.includes(s.id);
+  });
+  const keySong = pickRandom(keyPool, usedIds);
+  if (keySong) usedIds.push(keySong.id);
+
+  // 3. Mesmo gênero
+  const genre = getGenre(song);
+  const genrePool = others.filter(s => getGenre(s)===genre && !usedIds.includes(s.id));
+  const genreSong = pickRandom(genrePool, usedIds);
+  if (genreSong) usedIds.push(genreSong.id);
+
+  // 4. Mesmo andamento (BPM ±18)
+  const bpm = getSongBPM(song);
+  let bpmSong = null;
+  if (bpm) {
+    const bpmPool = others.filter(s => { const b=getSongBPM(s); return b&&Math.abs(b-bpm)<=18&&!usedIds.includes(s.id); });
+    bpmSong = pickRandom(bpmPool, usedIds);
+  }
+
+  const suggestions = [
+    seqSong  ? {label:'📋 Sequência',       s:seqSong,  meta: getBlocoNames()[seqSong.bloco]||''}          : null,
+    keySong  ? {label:`🎵 Tom: ${songKey}`, s:keySong,  meta: getGenre(keySong)}                            : null,
+    genreSong? {label:`🎸 ${genre}`,        s:genreSong,meta: getMood(genreSong)}                           : null,
+    bpmSong  ? {label:`🥁 ~${bpm} BPM`,    s:bpmSong,  meta: (getSongBPM(bpmSong)||'?')+' BPM'}            : null,
+  ].filter(Boolean);
+
+  if (!suggestions.length) { panel.classList.remove('on'); return; }
+  panel.classList.add('on');
+  cards.className = 'sug-cards'+(suggestions.length<4?' three-cols':'');
+
+  suggestions.forEach(({label,s,meta}) => {
+    const card = document.createElement('div');
+    card.className = 'sug-card';
+    card.innerHTML = `<div class="sug-label">${label}</div><div class="sug-name">${s.title}</div><div class="sug-meta">${meta}</div>`;
+    // use _rep to identify which repertoire this suggestion belongs to
+    const repIdx = s._rep !== undefined ? s._rep : 0;
+    card.addEventListener('click', () => {
+      if (repIdx !== activeRep) switchRepertoire(repIdx);
+      selectSong(s.id, false);
+    });
+    cards.appendChild(card);
+  });
+}
+
+/* ══════════════════════
+   FAVORITES
+   ══════════════════════ */
+function toggleFavorite() {
+  if (selectedId===null) return;
+  const fk = `${activeRep}-${selectedId}`;
+  const now = !favCache[fk];
+  favCache[fk] = now;
+  favRef.child(fk).set(now||null);
+  updateFavBtn(fk);
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+  notify(now ? '★ Adicionado aos favoritos' : '☆ Removido dos favoritos');
+}
+function updateFavBtn(fk) {
+  const btn = document.getElementById('fav-btn');
+  const on = !!favCache[fk];
+  btn.classList.toggle('fav-on', on);
+  btn.textContent = on ? '★ Fav' : '☆ Fav';
+}
+favRef.on('value', snap => {
+  favCache = snap.val() || {};
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+  if (selectedId!==null) updateFavBtn(`${activeRep}-${selectedId}`);
+});
+
+/* ══════════════════════
+   REHEARSAL STATUS
+   ══════════════════════ */
+function setRehearsal(status) {
+  if (selectedId===null) return;
+  const fk = `${activeRep}-${selectedId}`;
+  const current = rehCache[fk];
+  const newVal = current===status ? null : status; // toggle off
+  rehCache[fk] = newVal;
+  rehRef.child(fk).set(newVal);
+  updateRehBtns(fk);
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+  const labels = {ok:'🟢 Bem ensaiado',ensaiar:'🟡 Precisa ensaiar',nova:'🔴 Música nova'};
+  notify(newVal ? labels[newVal] : 'Status removido');
+}
+function updateRehBtns(fk) {
+  const val = rehCache[fk] || '';
+  ['ok','ensaiar','nova'].forEach(s => {
+    const btn = document.getElementById('reh-'+s);
+    if (btn) btn.classList.toggle('reh-active', val===s);
+  });
+}
+rehRef.on('value', snap => {
+  rehCache = snap.val() || {};
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+  if (selectedId!==null) updateRehBtns(`${activeRep}-${selectedId}`);
+});
+
+/* ══════════════════════
+   NAVIGATION (setlist-aware)
+   ══════════════════════ */
+function navSong(dir) {
+  if (selectedId === null) return;
+  // If in setlist tab with an active setlist → follow setlist order
+  if (activeTab === 'set' && activeSetlistId && setlistsCache[activeSetlistId]) {
+    const items = setlistsCache[activeSetlistId].items || [];
+    const idx = items.findIndex(i => i.id === selectedId && i.repId === activeRep);
+    const next = items[idx + dir];
+    if (next) {
+      if (next.repId !== activeRep) switchRepertoire(next.repId);
+      selectSong(next.id, false);
+      return;
+    }
+  }
+  // Default: follow repertoire order
+  const idx = currentSongs.findIndex(s => s.id === selectedId);
+  const next = currentSongs[idx + dir];
+  if (next) selectSong(next.id, false);
+}
+
+/* ══════════════════════
+   SETLIST (múltiplos)
+   ══════════════════════ */
+function openNewSetlistModal() {
+  document.getElementById('modal-title-text').textContent = '🎵 Novo Setlist';
+  document.getElementById('modal-input').placeholder = 'Nome do show (ex: Praça da Cultura)';
+  const today = new Date();
+  document.getElementById('modal-input').value = today.toLocaleDateString('pt-BR');
+  document.getElementById('modal-extra').style.display = 'none';
+  document.getElementById('modal-setlist').style.display = 'flex';
+  setTimeout(() => document.getElementById('modal-input').select(), 50);
+  modalCallback = (name) => createSetlist(name);
+}
+function cancelModal() {
+  document.getElementById('modal-setlist').style.display = 'none';
+  document.getElementById('modal-extra').style.display = 'none';
+  document.getElementById('modal-input').value = '';
+  modalCallback = null;
+}
+function confirmModal() {
+  const name = document.getElementById('modal-input').value.trim();
+  if (!name) return;
+  document.getElementById('modal-setlist').style.display = 'none';
+  if (modalCallback) { modalCallback(name); modalCallback = null; }
+}
+document.getElementById('modal-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmModal();
+  if (e.key === 'Escape') cancelModal();
+});
+
+function createSetlist(name) {
+  const id = 'sl_' + Date.now();
+  const today = new Date().toLocaleDateString('pt-BR');
+  const sl = { name, date: today, createdAt: Date.now(), items: [] };
+  setlistsCache[id] = sl;
+  setlistsRef.child(id).set(sl);
+  activeSetlistId = id;
+  activeSlRef.set(id);
+  expandedSetlistId = id;
+  renderSetlists();
+  notify('📋 Setlist criado: ' + name);
+}
+
+function deleteSetlist(id) {
+  delete setlistsCache[id];
+  setlistsRef.child(id).remove();
+  if (activeSetlistId === id) { activeSetlistId = null; activeSlRef.set(null); }
+  if (expandedSetlistId === id) expandedSetlistId = null;
+  renderSetlists();
+  notify('🗑️ Setlist removido');
+}
+
+function useSetlist(id) {
+  activeSetlistId = activeSetlistId === id ? null : id;
+  activeSlRef.set(activeSetlistId);
+  if (activeSetlistId) expandedSetlistId = id;
+  renderSetlists();
+  notify(activeSetlistId ? '▶ Navegando pelo setlist' : 'Setlist desativado');
+}
+
+function toggleExpandSetlist(id) {
+  expandedSetlistId = expandedSetlistId === id ? null : id;
+  renderSetlists();
+}
+
+function addToSetlist() {
+  if (selectedId === null) return notify('Selecione uma música primeiro');
+  if (!activeSetlistId) {
+    // No active setlist — create one first
+    openNewSetlistModal();
+    const orig = modalCallback;
+    modalCallback = (name) => {
+      createSetlist(name);
+      setTimeout(() => addToSetlist(), 200);
+    };
+    return;
+  }
+  const song = currentSongs.find(s => s.id === selectedId);
+  if (!song) return;
+  const sl = setlistsCache[activeSetlistId];
+  if (!sl) return;
+  if (!sl.items) sl.items = [];
+  if (sl.items.find(i => i.id === selectedId && i.repId === activeRep))
+    return notify('Já está neste setlist!');
+  sl.items.push({id: selectedId, repId: activeRep, title: song.title, key: song.key});
+  setlistsRef.child(activeSetlistId + '/items').set(sl.items);
+  renderSetlists();
+  notify('📋 Adicionado ao setlist!');
+}
+
+function removeFromSetlistItem(slId, idx) {
+  const sl = setlistsCache[slId];
+  if (!sl || !sl.items) return;
+  sl.items.splice(idx, 1);
+  setlistsRef.child(slId + '/items').set(sl.items.length ? sl.items : null);
+  renderSetlists();
+}
+
+function renderSetlists() {
+  const el = document.getElementById('setlist-list');
+  const cnt = document.getElementById('setlist-count');
+  el.innerHTML = '';
+  const ids = Object.keys(setlistsCache).sort((a,b) => (setlistsCache[b].createdAt||0) - (setlistsCache[a].createdAt||0));
+  cnt.textContent = ids.length ? `${ids.length} setlist${ids.length>1?'s':''}` : 'Nenhum setlist';
+
+  ids.forEach(id => {
+    const sl = setlistsCache[id];
+    if (!sl) return;
+    const items = sl.items || [];
+    const isActive = id === activeSetlistId;
+    const isExpanded = id === expandedSetlistId;
+
+    const card = document.createElement('div');
+    card.className = 'sl-card' + (isActive?' sl-active':'') + (isExpanded?' sl-expanded':'');
+
+    // Header
+    const head = document.createElement('div');
+    head.className = 'sl-card-head';
+    head.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div class="sl-name">${sl.name}</div>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <span class="sl-date">${sl.date||''}</span>
+          <span class="sl-count">${items.length} música${items.length!==1?'s':''}</span>
+        </div>
+      </div>
+      <div class="sl-btns">
+        <button class="sl-btn use-btn${isActive?' using':''}" onclick="event.stopPropagation();useSetlist('${id}')">${isActive?'▶ Usando':'▶ Usar'}</button>
+        <button class="sl-btn" onclick="event.stopPropagation();deleteSetlist('${id}')">🗑️</button>
+      </div>`;
+    head.addEventListener('click', () => toggleExpandSetlist(id));
+    card.appendChild(head);
+
+    // Items
+    const itemsEl = document.createElement('div');
+    itemsEl.className = 'sl-items';
+    items.forEach((item, i) => {
+      const row = document.createElement('div');
+      const isCurrent = item.id === selectedId && item.repId === activeRep;
+      row.className = 'sl-item' + (isCurrent ? ' sl-current' : '');
+      row.innerHTML = `<span class="sl-item-num">${i+1}</span><span class="sl-item-title">${item.title}</span><span class="sl-item-key">${item.key}</span><button class="sl-item-rm" onclick="event.stopPropagation();removeFromSetlistItem('${id}',${i})">✕</button>`;
+      makeDraggable(row, id, i);
+      row.addEventListener('click', () => {
+        if (item.repId !== activeRep) switchRepertoire(item.repId);
+        selectSong(item.id, false);
+        showTab('rep');
+      });
+      itemsEl.appendChild(row);
+    });
+    card.appendChild(itemsEl);
+    el.appendChild(card);
+  });
+
+  // Update nav buttons if in setlist mode
+  if (activeTab === 'set' && activeSetlistId && setlistsCache[activeSetlistId]) {
+    const items = setlistsCache[activeSetlistId].items || [];
+    const idx = selectedId !== null ? items.findIndex(i => i.id===selectedId && i.repId===activeRep) : -1;
+    document.getElementById('btn-prev').disabled = idx <= 0;
+    document.getElementById('btn-next').disabled = idx < 0 || idx >= items.length - 1;
+  }
+}
+
+setlistsRef.on('value', snap => {
+  setlistsCache = snap.val() || {};
+  renderSetlists();
+});
+activeSlRef.on('value', snap => {
+  activeSetlistId = snap.val() || null;
+  renderSetlists();
+});
+
+/* ══════════════════════
+   HISTORY (com sessionStart)
+   ══════════════════════ */
+let sessionStart = 0; // timestamp — only songs after this count as "played today"
+const sessionRef = db.ref('sessionStart');
+
+function addToHistory(song) {
+  const entry = {id:song.id, repId:activeRep, title:song.title, key:song.key, ts:Date.now()};
+  historyCache.unshift(entry);
+  historyRef.set(historyCache.slice(0,80));
+  renderHistory();
+}
+function newShow() {
+  const ts = Date.now();
+  sessionRef.set(ts);
+  showStartRef.set(ts); // reset timer on new show
+  document.getElementById('repeat-alert').classList.remove('show');
+  notify('🎪 Novo show iniciado!');
+}
+function clearHistory() {
+  historyCache = [];
+  historyRef.set(null);
+  sessionRef.set(0);
+  renderHistory();
+  document.getElementById('repeat-alert').classList.remove('show');
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+  notify('🗑️ Histórico apagado');
+}
+function isPlayedInSession(item) {
+  return item.ts > sessionStart && item.id !== undefined;
+}
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  const cnt = document.getElementById('history-count');
+  el.innerHTML = '';
+  const sessionItems = historyCache.filter(isPlayedInSession);
+  cnt.textContent = sessionItems.length ? `${sessionItems.length} neste show` : 'Nenhuma tocada';
+  let lastSession = false;
+  historyCache.forEach((item, i) => {
+    // Show separator before first item that's before the session start
+    if (!lastSession && item.ts <= sessionStart && historyCache.some(isPlayedInSession)) {
+      lastSession = true;
+      const sep = document.createElement('div');
+      sep.style.cssText = 'padding:5px 12px;font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;border-top:1px solid var(--border);margin-top:4px;';
+      sep.textContent = '— show anterior —';
+      el.appendChild(sep);
+    }
+    const div = document.createElement('div');
+    div.className = 'history-item' + (i===0&&isPlayedInSession(item)?' played-now':'');
+    const t = new Date(item.ts);
+    const hm = t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+    div.style.opacity = isPlayedInSession(item) ? '1' : '0.45';
+    div.innerHTML = `<span class="hi-title">${item.title}</span><span class="hi-time">${hm}</span>`;
+    div.addEventListener('click', () => {
+      if (item.repId!==activeRep) switchRepertoire(item.repId);
+      selectSong(item.id, false);
+      showTab('rep');
+    });
+    el.appendChild(div);
+  });
+}
+let sessionStartLoaded = false;
+
+// Load sessionStart FIRST to avoid race condition with history badges
+sessionRef.once('value', snap => {
+  sessionStart = snap.val() || 0;
+  sessionStartLoaded = true;
+  // Now safe to subscribe to history
+  historyRef.on('value', snap => {
+    const val = snap.val();
+    historyCache = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+    renderHistory();
+    buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+    if (selectedId!==null) {
+      const played = historyCache.some(h=>h.id===selectedId&&h.repId===activeRep&&isPlayedInSession(h));
+      document.getElementById('repeat-alert').classList.toggle('show', played);
+    }
+  });
+  // Continue listening for session changes
+  sessionRef.on('value', snap => {
+    sessionStart = snap.val() || 0;
+    renderHistory();
+    buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+    if (selectedId!==null) {
+      const played = historyCache.some(h=>h.id===selectedId&&h.repId===activeRep&&isPlayedInSession(h));
+      document.getElementById('repeat-alert').classList.toggle('show', played);
+    }
+  });
+});
+
+/* ══════════════════════
+   NOTES
+   ══════════════════════ */
+function loadNotes(fk) {
+  const ta = document.getElementById('notes-input');
+  ta.value = notesCache[fk] || '';
+  document.getElementById('notes-saving').textContent = '';
+}
+function toggleNotes() {
+  notesOpen = !notesOpen;
+  document.getElementById('notes-input').classList.toggle('open', notesOpen);
+  document.getElementById('notes-toggle').textContent = (notesOpen ? '✏️ Fechar anotações' : '✏️ Anotações compartilhadas');
+  const sp = document.createElement('span');
+  sp.id = 'notes-saving';
+  document.getElementById('notes-toggle').appendChild(sp);
+}
+document.getElementById('notes-input').addEventListener('input', e => {
+  if (selectedId===null) return;
+  const fk = `${activeRep}-${selectedId}`;
+  notesCache[fk] = e.target.value;
+  document.getElementById('notes-saving').textContent = '💾 salvando...';
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(() => {
+    notesRef.child(fk).set(e.target.value||null).then(()=>{
+      document.getElementById('notes-saving').textContent = '✓ salvo';
+      setTimeout(()=>{ const s=document.getElementById('notes-saving'); if(s)s.textContent=''; },1500);
+    });
+  }, 800);
+});
+notesRef.on('value', snap => {
+  notesCache = snap.val() || {};
+  if (selectedId!==null) {
+    const fk=`${activeRep}-${selectedId}`;
+    const ta=document.getElementById('notes-input');
+    if (ta && document.activeElement!==ta) ta.value = notesCache[fk]||'';
+  }
+});
+
+/* ══════════════════════
+   PRESENÇA — quem está online
+   ══════════════════════ */
+const sessionUID  = (() => { let u=localStorage.getItem('cdp-uid'); if(!u){u='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); localStorage.setItem('cdp-uid',u);} return u; })();
+let userName      = localStorage.getItem('cdp-name') || '';
+const presenceRef = db.ref('presence/'+sessionUID);
+
+function saveName() {
+  const n = document.getElementById('name-input').value.trim();
+  if (!n) return;
+  userName = n;
+  localStorage.setItem('cdp-name', n);
+  document.getElementById('name-modal').style.display = 'none';
+  registerPresence();
+}
+document.getElementById('name-input').addEventListener('keydown', e => { if(e.key==='Enter') saveName(); });
+
+function registerPresence() {
+  db.ref('.info/connected').on('value', snap => {
+    if (snap.val()) {
+      presenceRef.onDisconnect().remove();
+      presenceRef.set({name: userName || 'Músico', ts: Date.now()});
+    }
+  });
+}
+
+db.ref('presence').on('value', snap => {
+  const p = snap.val() || {};
+  const entries = Object.values(p).filter(v=>v&&v.name);
+  const el = document.getElementById('online-count');
+  if (!el) return;
+  el.textContent = entries.length ? `👥 ${entries.length}` : '';
+  el.title = entries.map(v=>v.name).join(', ');
+  el.classList.toggle('on', entries.length > 0);
+});
+
+function showOnlineList() {
+  // show tooltip already set, just notify
+  const el = document.getElementById('online-count');
+  if (el && el.title) notify('Online: ' + el.title);
+}
+
+// First open: show name modal or register presence
+if (!userName) {
+  document.getElementById('name-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('name-input').focus(), 200);
+} else {
+  registerPresence();
+}
+
+/* ══════════════════════
+   YOUTUBE / CIFRACLUB
+   ══════════════════════ */
+function openYouTube() {
+  if (selectedId===null) return notify('Selecione uma música primeiro');
+  const song = currentSongs.find(s=>s.id===selectedId);
+  const author = getAuthor(song);
+  window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song.title+(author?' '+author:'')+ ' samba')}`, '_blank');
+}
+function openCifraClub() {
+  if (selectedId===null) return notify('Selecione uma música primeiro');
+  const song = currentSongs.find(s=>s.id===selectedId);
+  const author = getAuthor(song);
+  const q = song.title + (author ? ' ' + author : '');
+  window.open(`https://www.google.com/search?q=site:cifraclub.com.br+${encodeURIComponent(q)}`, '_blank');
+}
+
+/* ══════════════════════
+   AI PANEL (fora do repertório)
+   ══════════════════════ */
+function toggleAIPanel() {
+  const panel = document.getElementById('ai-panel');
+  const btn   = document.getElementById('ai-toggle-btn');
+  const open  = panel.classList.toggle('open');
+  btn.textContent = open ? '🤖 Fechar busca IA ▲' : '🤖 Buscar fora do repertório';
+  if (open) setTimeout(()=>document.getElementById('ai-search-input').focus(), 100);
+}
+function openCifraClubSearch() {
+  const q = document.getElementById('ai-search-input').value.trim();
+  if (!q) return notify('Digite o nome da música');
+  window.open(`https://www.google.com/search?q=site:cifraclub.com.br+${encodeURIComponent(q)}`, '_blank');
+}
+function openYouTubeSearch() {
+  const q = document.getElementById('ai-search-input').value.trim();
+  if (!q) return notify('Digite o nome da música');
+  window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q+' samba cifra')}`, '_blank');
+}
+
+const authorData = {
+  "O Bem":"Arlindo Cruz","Nos Braços da Batucada":"Arlindo Cruz",
+  "Retalhos de Cetim":"Benito di Paula","Já É":"Jorge Aragão",
+  "Moleque Atrevido":"Arlindo Cruz","Identidade":"Jorge Aragão",
+  "Partido Alto":"Chico Buarque","Cabide":"Arlindo Cruz",
+  "Quando a Gira Girou":"Zeca Pagodinho","Alma Boêmia":"Almir Guineto",
+  "Não Deixa o Samba Morrer":"Almir Guineto","Você Me Vira a Cabeça":"Alcione",
+  "Pedaço de Ilusão":"Almir Guineto","Alguém Me Avisou":"Dona Ivone Lara",
+  "Água de Chuva no Mar":"Jorge Aragão","Vou Festejar":"Beth Carvalho",
+  "La Belle de Jour/Mar e Sol":"Maria Bethânia","Eu Só Quero um Xodó":"Dominguinhos",
+  "Anunciação":"Alceu Valença","Ai Que Saudade D'Ocê":"Dominguinhos",
+  "Tia Nastácia":"Paulinho da Viola","Sol Nascerá":"Fundo de Quintal",
+  "Sorriso Negro":"Jovelina Pérola Negra","Acreditar":"Dona Ivone Lara",
+  "Sonho Meu":"Dona Ivone Lara","Todo Menino é um Rei":"Roberto Ribeiro",
+  "Preto Cor Preta":"Martinho da Vila","Problema Emocional":"Raça Negra",
+  "Show Tem que Continuar":"Fundo de Quintal","Lendas da Mata":"Grupo Raça",
+  "Radar":"Sorriso Maroto","Não Quero Dinheiro":"Tim Maia",
+  "Gostava Tanto de Você":"Tim Maia","Descobridor dos Sete Mares":"Tim Maia",
+  "O Descobridor dos Sete Mares":"Tim Maia","Arrasta a Sandalha":"Samba de Raiz",
+  "Flor de Lis":"Djavan","O Bêbado e a Equilibrista":"João Bosco / Aldir Blanc",
+  "Oyá":"Grupo Raça","A Loba":"Simone","Juízo Final":"Alcione",
+  "Tropicana":"Caetano Veloso","Água da Minha Sede":"Arlindo Cruz",
+  "Meu Lugar":"Arlindo Cruz","Favo de Mel":"Dudu Nobre",
+  "Canto das Três Raças":"Clara Nunes","Sorriso Aberto":"Paulinho da Viola",
+  "Nossa Escola":"Almir Guineto","Castelo de um Quarto Só":"Renato da Rocinha",
+  "24 Horas de Amor":"Exaltasamba","Telegrama":"Exaltasamba",
+  "Separação":"Exaltasamba","Gamei":"Exaltasamba",
+};
+function getAuthor(song) { return authorData[song.title] || ''; }
+
+/* ══════════════════════
+   TRANSPOSE — mostra tom resultante
+   ══════════════════════ */
+function updateTransposeDisplay(song) {
+  const baseKey = detectFirstChord(song.content) || song.key;
+  if (transposeOffset === 0) {
+    document.getElementById('song-key-tag').textContent = 'Tom: ' + baseKey;
+    document.getElementById('transpose-val').textContent = '±0';
+  } else {
+    const newKey = transposeNote(baseKey, transposeOffset, FLAT_ROOT.has(baseKey));
+    document.getElementById('song-key-tag').textContent = `Tom: ${baseKey} → ${newKey}`;
+    document.getElementById('transpose-val').textContent = (transposeOffset>0?'+':'')+transposeOffset;
+  }
+}
+
+/* ══════════════════════
+   GLOBAL SEARCH
+   ══════════════════════ */
+let globalSearchActive = false;
+function toggleGlobalSearch() {
+  globalSearchActive = !globalSearchActive;
+  const btn = document.getElementById('global-search-btn');
+  btn.classList.toggle('active', globalSearchActive);
+  btn.textContent = globalSearchActive ? '🌐 Buscando nos 3 repertórios ✓' : '🌐 Buscar nos 3 repertórios';
+  buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
+}
+
+function buildList(nameQ='', keyQ='') {
+  const list = document.getElementById('song-list');
+  list.innerHTML = '';
+  const ln = nameQ.toLowerCase().trim();
+  const lk = keyQ.toLowerCase().trim();
+
+  if (globalSearchActive && (ln || lk)) {
+    // Search all 3 repertoires
+    const repNames = ['🖤 CN2025','🎵 2024','🆕 2025Rev.'];
+    [songs, songs2024, songs3].forEach((rep, ri) => {
+      let res = rep;
+      if (ln) res = res.filter(s => s.title.toLowerCase().includes(ln));
+      if (lk) res = res.filter(s => s.key.toLowerCase().startsWith(lk));
+      if (!res.length) return;
+      const hdr = document.createElement('div');
+      hdr.className = 'global-result-rep';
+      hdr.textContent = repNames[ri];
+      list.appendChild(hdr);
+      res.forEach(s => {
+        const el = makeItemForRep(s, ri);
+        list.appendChild(el);
+      });
+    });
+    if (!list.children.length) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.8rem;">Nenhuma música encontrada</div>';
+    return;
+  }
+
+  // Normal single-rep search
+  let filtered = currentSongs;
+  if (ln) filtered = filtered.filter(s => s.title.toLowerCase().includes(ln));
+  if (lk) filtered = filtered.filter(s => s.key.toLowerCase().startsWith(lk));
+  if (!filtered.length) { list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.8rem;">Nenhuma música encontrada</div>'; return; }
+  if (ln || lk) { filtered.forEach(s => list.appendChild(makeItem(s))); return; }
+  const blocos = [...new Set(currentSongs.map(s=>s.bloco))];
+  const bn = getBlocoNames();
+  blocos.forEach(b => {
+    const group = filtered.filter(s=>s.bloco===b);
+    if (!group.length) return;
+    const hdr = document.createElement('div');
+    hdr.className = 'bloco-header';
+    hdr.textContent = bn[b] || 'Bloco '+b;
+    list.appendChild(hdr);
+    group.forEach(s => list.appendChild(makeItem(s)));
+  });
+}
+
+function makeItemForRep(song, repIdx) {
+  const el = document.createElement('div');
+  el.className = 'song-item';
+  el.innerHTML = `<span class="song-name">${song.title}</span><span class="song-key">${song.key}</span>`;
+  el.addEventListener('click', () => {
+    if (repIdx !== activeRep) switchRepertoire(repIdx);
+    selectSong(song.id, false);
+    if (window.innerWidth <= 820) toggleSidebar(false);
+  });
+  return el;
+}
+
+/* ══════════════════════
+   VISUAL METRONOME
+   ══════════════════════ */
+let metronomeActive = false;
+let metronomeInterval = null;
+
+function toggleMetronome() {
+  metronomeActive = !metronomeActive;
+  document.getElementById('metro-btn').classList.toggle('active', metronomeActive);
+  if (metronomeActive) {
+    const song = selectedId !== null ? currentSongs.find(s=>s.id===selectedId) : null;
+    const bpm = (song && getSongBPM(song)) || 90;
+    startMetronome(bpm);
+    notify(`♩ Metrônomo: ${bpm} BPM`);
+  } else {
+    stopMetronome();
+  }
+}
+function startMetronome(bpm) {
+  stopMetronome();
+  const dot = document.getElementById('metro-dot');
+  metronomeInterval = setInterval(() => {
+    dot.classList.add('beat');
+    setTimeout(() => dot.classList.remove('beat'), 80);
+  }, 60000 / bpm);
+}
+function stopMetronome() {
+  clearInterval(metronomeInterval);
+  document.getElementById('metro-dot').classList.remove('beat');
+}
+
+/* ══════════════════════
+   TELEPROMPTER (auto-scroll)
+   ══════════════════════ */
+let teleprompting = false;
+let teleRAF = null;
+
+function toggleTeleprompter() {
+  teleprompting = !teleprompting;
+  const btn = document.getElementById('tele-btn');
+  btn.classList.toggle('active', teleprompting);
+  btn.textContent = teleprompting ? '⏹ Parar' : '▶ Auto';
+  if (teleprompting) runTeleprompter();
+  else cancelAnimationFrame(teleRAF);
+}
+function runTeleprompter() {
+  const area = document.getElementById('content-area');
+  const song = selectedId !== null ? currentSongs.find(s=>s.id===selectedId) : null;
+  const bpm  = (song && getSongBPM(song)) || 80;
+  // px/segundo: BPM 80 → 22px/s, BPM 120 → 34px/s
+  const pxPerSec = 18 + (bpm / 120) * 18;
+  let lastTs = null;
+  let accum  = 0;
+
+  function step(ts) {
+    if (!teleprompting) return;
+    if (lastTs !== null) {
+      const dt = Math.min(ts - lastTs, 100); // limita saltos grandes
+      accum += pxPerSec * dt / 1000;
+      if (accum >= 1) {
+        const px = Math.floor(accum);
+        area.scrollTop += px;
+        accum -= px;
+      }
+    }
+    lastTs = ts;
+    if (area.scrollTop >= area.scrollHeight - area.clientHeight - 2) {
+      teleprompting = false;
+      document.getElementById('tele-btn').classList.remove('active');
+      document.getElementById('tele-btn').textContent = '▶ Auto';
+      return;
+    }
+    teleRAF = requestAnimationFrame(step);
+  }
+  teleRAF = requestAnimationFrame(step);
+}
+
+/* ══════════════════════
+   SHOW TIMER
+   ══════════════════════ */
+let showTimerInterval = null;
+const showStartRef = db.ref('showStartTs');
+
+function startShowTimer(ts) {
+  clearInterval(showTimerInterval);
+  const el = document.getElementById('show-timer');
+  el.classList.add('on');
+  showTimerInterval = setInterval(() => {
+    const e = Date.now() - ts;
+    const m = Math.floor(e/60000), s = Math.floor((e%60000)/1000);
+    el.textContent = `⏱ ${m}:${s.toString().padStart(2,'0')}`;
+  }, 1000);
+}
+showStartRef.on('value', snap => {
+  const ts = snap.val();
+  if (ts) startShowTimer(ts);
+});
+
+/* ══════════════════════
+   SHOW SUMMARY
+   ══════════════════════ */
+function showSummary() {
+  if (!historyCache.length) return notify('Nenhuma música tocada ainda');
+  const sessionItems = historyCache.filter(isPlayedInSession);
+  if (!sessionItems.length) return notify('Nenhuma música neste show');
+
+  const duration = sessionItems.length > 0
+    ? Math.round((Date.now() - sessionItems[sessionItems.length-1].ts) / 60000) : 0;
+
+  const keys = {};
+  sessionItems.forEach(h => { keys[h.key] = (keys[h.key]||0)+1; });
+  const topKey = Object.entries(keys).sort((a,b)=>b[1]-a[1])[0]?.[0] || '-';
+
+  const html = `
+    <div class="summary-row"><span>Músicas tocadas</span><span>${sessionItems.length}</span></div>
+    <div class="summary-row"><span>Duração estimada</span><span>${duration} min</span></div>
+    <div class="summary-row"><span>Tom mais frequente</span><span>${topKey}</span></div>
+    <div class="summary-songs"><strong style="color:var(--text-muted);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;">Setlist do show</strong><br>
+      ${sessionItems.map((h,i)=>`${i+1}. ${h.title}`).join('<br>')}
+    </div>`;
+  document.getElementById('summary-content').innerHTML = html;
+  document.getElementById('summary-modal').style.display = 'flex';
+}
+
+/* ══════════════════════
+   AGENDA / CALENDAR
+   ══════════════════════ */
+const eventsRef = db.ref('events');
+let eventsCache = {};
+
+function openAgendaModal() {
+  document.getElementById('modal-title-text').textContent = '📅 Novo Evento';
+  const today = new Date();
+  document.getElementById('modal-input').placeholder = 'Nome do evento (ex: Show na Praça)';
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal-input2').placeholder = 'Data (ex: 15/06/2026)';
+  document.getElementById('modal-input2').value = today.toLocaleDateString('pt-BR');
+  document.getElementById('modal-input3').placeholder = 'Local';
+  document.getElementById('modal-input3').value = '';
+  document.getElementById('modal-extra').style.display = 'block';
+  document.getElementById('modal-setlist').style.display = 'flex';
+  setTimeout(() => document.getElementById('modal-input').focus(), 50);
+  modalCallback = (name) => {
+    const date = document.getElementById('modal-input2').value.trim() || new Date().toLocaleDateString('pt-BR');
+    const loc  = document.getElementById('modal-input3').value.trim();
+    createEvent(name, date, loc);
+    document.getElementById('modal-extra').style.display = 'none';
+  };
+}
+
+function createEvent(title, date, location) {
+  const id = 'ev_' + Date.now();
+  const ev = { title, date, location: location||'', createdAt: Date.now() };
+  eventsCache[id] = ev;
+  eventsRef.child(id).set(ev);
+  renderAgenda();
+  notify('📅 Evento adicionado!');
+}
+
+function deleteEvent(id) {
+  delete eventsCache[id];
+  eventsRef.child(id).remove();
+  renderAgenda();
+}
+
+function parseDate(str) {
+  // Accepts DD/MM/YYYY
+  const [d,m,y] = str.split('/');
+  return new Date(+y, +m-1, +d);
+}
+
+function renderAgenda() {
+  const el = document.getElementById('agenda-list');
+  const cnt = document.getElementById('agenda-count');
+  el.innerHTML = '';
+  const ids = Object.keys(eventsCache).sort((a,b) => {
+    try { return parseDate(eventsCache[a].date) - parseDate(eventsCache[b].date); }
+    catch { return 0; }
+  });
+  const upcoming = ids.filter(id => {
+    try { return parseDate(eventsCache[id].date) >= new Date(new Date().setHours(0,0,0,0)); }
+    catch { return true; }
+  });
+  cnt.textContent = upcoming.length ? `${upcoming.length} próximo${upcoming.length>1?'s':''}` : 'Sem eventos';
+
+  if (!ids.length) {
+    el.innerHTML = '<div style="padding:20px 14px;color:var(--text-muted);font-size:.8rem;text-align:center;">Nenhum evento cadastrado</div>';
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  ids.forEach(id => {
+    const ev = eventsCache[id];
+    let isNext = false;
+    try { isNext = parseDate(ev.date) >= today; } catch {}
+    const div = document.createElement('div');
+    div.className = 'agenda-event' + (isNext ? ' ag-next' : '');
+    div.innerHTML = `
+      <button class="ag-rm" onclick="deleteEvent('${id}')">✕</button>
+      <div class="ag-date">${ev.date}</div>
+      <div class="ag-title">${ev.title}</div>
+      ${ev.location ? `<div class="ag-location">📍 ${ev.location}</div>` : ''}`;
+    el.appendChild(div);
+  });
+}
+
+eventsRef.on('value', snap => {
+  eventsCache = snap.val() || {};
+  renderAgenda();
+});
+
+/* ══════════════════════
+   DRAG-DROP SETLIST
+   ══════════════════════ */
+let dragSrcSlId = null;
+let dragSrcIdx  = null;
+
+function makeDraggable(row, slId, idx) {
+  row.setAttribute('draggable', 'true');
+  row.addEventListener('dragstart', e => {
+    dragSrcSlId = slId; dragSrcIdx = idx;
+    e.dataTransfer.effectAllowed = 'move';
+    row.style.opacity = '.4';
+  });
+  row.addEventListener('dragend', () => row.style.opacity = '');
+  row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+  row.addEventListener('drop', e => {
+    e.preventDefault();
+    if (dragSrcSlId !== slId || dragSrcIdx === idx) return;
+    const sl = setlistsCache[slId];
+    if (!sl || !sl.items) return;
+    const items = [...sl.items];
+    const [moved] = items.splice(dragSrcIdx, 1);
+    items.splice(idx, 0, moved);
+    sl.items = items;
+    setlistsRef.child(slId + '/items').set(items);
+    renderSetlists();
+  });
+}
+
+/* ══════════════════════
+   UPDATE showTab for agenda
+   ══════════════════════ */
+function showTab(tab) {
+  activeTab = tab;
+  ['rep','set','hist','agenda'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) { el.style.display = t===tab ? 'flex' : 'none'; el.style.flexDirection='column'; el.style.overflow='hidden'; el.style.flex='1'; }
+    const btn = document.getElementById('stab-'+t);
+    if (btn) btn.classList.toggle('active', t===tab);
+  });
+  if (tab === 'set') renderSetlists();
+}
+function broadcast() {
+  if (selectedId===null) return;
+  const song = currentSongs.find(s=>s.id===selectedId);
+  songRef.set({id: selectedId, repId: activeRep}).then(() => {
+    if (song) addToHistory(song);
+    showStartRef.once('value', snap => { if (!snap.val()) showStartRef.set(Date.now()); });
+    notify('📡 Exibindo para todos!');
+    const btn = document.getElementById('broadcast-btn');
+    btn.classList.add('pulse');
+    setTimeout(()=>btn.classList.remove('pulse'), 600);
+  }).catch(err=>notify('❌ Erro: '+err.message));
+}
+
+/* ══════════════════════
+   FIREBASE LISTENERS
+   ══════════════════════ */
+songRef.on('value', snap => {
+  const val = snap.val();
+  if (val!==null && val!==undefined) {
+    const id    = typeof val==='object' ? val.id    : val;
+    const repId = typeof val==='object' ? (val.repId ?? 0) : 0;
+    broadcastId = id;
+    if (activeRep!==repId) switchRepertoire(repId);
+    document.getElementById('live-badge').classList.add('show');
+    selectSong(id, true);
+  }
+}, err => {
+  document.getElementById('conn-text').textContent = 'Erro Firebase';
+  document.getElementById('conn-dot').classList.add('offline');
+});
+
+db.ref('.info/connected').on('value', snap => {
+  const dot=document.getElementById('conn-dot'), txt=document.getElementById('conn-text'), on=snap.val()===true;
+  dot.classList.toggle('online',on); dot.classList.toggle('offline',!on);
+  txt.textContent = on?'Conectado':'Sem conexão';
+});
+
+/* ══════════════════════
+   BPM LOOKUP
+   ══════════════════════ */
+const bpmData = {
+  // ── CONSCIÊNCIA NEGRA 2025 ──
+  "O Bem":88, "Nos Braços da Batucada":95, "Retalhos de Cetim":80,
+  "Madureira":90, "Já É":95, "Moleque Atrevido":100, "Identidade":90,
+  "Partido Alto":102, "Cabide":92, "Quando a Gira Girou":95,
+  "Alma Boêmia":85, "Só Depois":90, "Deixa Acontecer":95,
+  "Deixa Alagar":100, "Não Deixa o Samba Morrer":100,
+  "Você Me Vira a Cabeça":92, "Sem Ataque e Sem Defesa":90,
+  "Pedaço de Ilusão":75, "Alguém Me Avisou":90, "Água de Chuva no Mar":95,
+  "Vou Festejar":112, "La Belle de Jour":85, "Eu Só Quero um Xodó":90,
+  "Anunciação":80, "Ai Que Saudade D'Ocê":108, "Banho de Cheiro":100,
+  "Vara de Família":95, "Tia Nastácia":85, "Mesmo Manto":80,
+  "Luz do Repente/Feirinha da Pavuna/Caxambu":112,
+  "A Sorrir/Sol Nascerá":85, "Sorriso Negro":90, "Acreditar":90,
+  "Sonho Meu":75, "Todo Menino é um Rei":95, "Preto Cor Preta":90,
+  "Coisa de Pele":85, "Meu Castelo":90, "Brilho no Olhar":85,
+  "Problema Emocional":88, "Show Tem que Continuar":100,
+  "Quem me Protege Não Dorme":80, "Ogum":85, "Reza/É D'Oxum":78,
+  "Oyá":85, "Lendas da Mata":92, "Radar":108, "Chupa Toda":112,
+  "Cria da Ivete":118, "Energia de Gostosa":115, "Banho de Folhas":95,
+  "Não Quero Dinheiro":95, "Gostava Tanto de Você":85,
+  "Descobridor dos Sete Mares":90,
+  // ── REPERTÓRIO 2024 ──
+  "Arrasta a Sandalha":105, "Sol Nascerá":85, "Sorriso Negro":90,
+  "Partido Alto":102, "Cabide":92, "Fogo de Paixão":88,
+  "Tendência":85, "Ainda é Tempo":80, "Avião":95, "Flor de Lis":80,
+  "Para Ver as Meninas":75, "Tia Nastácia":85, "Lucidez":85,
+  "Moleque Atrevido":100, "Água da Minha Sede":95,
+  "Castelo de um Quarto Só":88, "Trilha do Amor":95,
+  "Cheia de Manias":100, "Retalhos de Cetim":80,
+  "Problema Emocional":88, "Nossa Escola":95, "Meu Lugar":90,
+  "Será que é Amor":85, "O Que é o Amor":88, "A Sós":80,
+  "Eu Só Quero um Xodó":90, "Tropicana":105, "O Bêbado e a Equilibrista":82,
+  "Lendas da Mata":92, "Dodói, Dodói":90, "Oyá":85, "Outra Ceia":82,
+  "Você Me Vira a Cabeça":92, "A Loba":95, "Juízo Final":88,
+  "Falsa Consideração":90, "Domingo":82, "Favo de Mel":88,
+  "Quando o Sol Nascer":85, "24 Horas de Amor":95, "Telegrama":90,
+  "Separação":85, "Gamei":100, "Radar":108, "Timidez":90,
+  "Tu Mandas no Meu Coração":82, "Não Quero Dinheiro":95,
+  "País Tropical":105, "Gostava Tanto de Você":85,
+  "Você":88, "O Descobridor dos Sete Mares":90, "Zona de Perigo":110,
+  "Identidade":90
+};
+
+function getSongBPM(song) { return bpmData[song.title] || null; }
+
+/* ══════════════════════
+   FIRST CHORD DETECTION
+   ══════════════════════ */
+function detectFirstChord(content) {
+  const lines = content.split('\n');
+  const chordToken = /^([A-G][b#]?)(?:m|M|maj|min|dim|aug|sus|add|°)?[0-9]?/;
+  
+  function isChordLine(line) {
+    const tokens = line.trim().split(/\s+/).filter(t => t.length > 0 && t.length <= 14);
+    if (!tokens.length) return false;
+    let hits = 0;
+    for (const t of tokens) {
+      if (chordToken.test(t) && /^[A-G]/.test(t)) hits++;
+    }
+    return hits >= 1 && hits / tokens.length >= 0.55;
+  }
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t || t.startsWith('Tom:') || t.startsWith('[') || t.startsWith('(') || t.startsWith('▪') || t.startsWith('❖') || t.startsWith('o ')) continue;
+    if (isChordLine(t)) {
+      const first = t.split(/\s+/)[0];
+      const m = first.match(/^([A-G][b#]?(?:m(?!aj))?)/);
+      if (m) return m[1];
+    }
+  }
+  return null;
+}
+
+/* ══════════════════════
+   SWIPE / DRAG TO NAVIGATE
+   ══════════════════════ */
+(function() {
+  let startX = 0, startY = 0, dragging = false;
+  const area = document.getElementById('content-area');
+
+  // Touch (mobile)
+  area.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  area.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) navSong(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  // Mouse (desktop)
+  area.addEventListener('mousedown', e => {
+    startX = e.clientX; startY = e.clientY; dragging = true;
+  });
+  area.addEventListener('mouseup', e => {
+    if (!dragging) return;
+    dragging = false;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 80) navSong(dx < 0 ? 1 : -1);
+  });
+  area.addEventListener('mouseleave', () => { dragging = false; });
+})();
+
+/* ══════════════════════
+   SEARCH
+   ══════════════════════ */
+document.getElementById('search-input').addEventListener('input', e => {
+  buildList(e.target.value, document.getElementById('key-filter').value);
+});
+document.getElementById('key-filter').addEventListener('input', e => {
+  buildList(document.getElementById('search-input').value, e.target.value);
+});
+
+/* ══════════════════════
+   FONT SIZE
+   ══════════════════════ */
+function changeFont(delta) {
+  fontSize = Math.min(2.6, Math.max(0.75, fontSize + delta));
+  localStorage.setItem('cdp-fs', fontSize);
+  const el = document.getElementById('song-content');
+  if (el) el.style.fontSize = fontSize + 'rem';
+}
+
+/* ══════════════════════
+   FULLSCREEN
+   ══════════════════════ */
+function goFullscreen() {
+  if (!document.fullscreenElement)
+    document.documentElement.requestFullscreen().catch(() => {});
+  else
+    document.exitFullscreen();
+}
+
+/* ══════════════════════
+   MOBILE SIDEBAR
+   ══════════════════════ */
+function toggleSidebar(forceOpen) {
+  const sb  = document.getElementById('sidebar');
+  const ov  = document.getElementById('overlay');
+  const open = typeof forceOpen === 'boolean' ? forceOpen : !sb.classList.contains('open');
+  sb.classList.toggle('open', open);
+  ov.classList.toggle('show', open);
+}
+document.getElementById('overlay').addEventListener('click', () => toggleSidebar(false));
+
+/* ══════════════════════
+   NOTIFICATION
+   ══════════════════════ */
+let notifTimer;
+function notify(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => n.classList.remove('show'), 2600);
+}
+
+/* init */
+buildList();
+</script>
+</body>
+</html>
