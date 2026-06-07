@@ -1364,7 +1364,8 @@
 
 <!-- ═══ FIREBASE ═══ -->
 <script></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>/* ── SAFE STORAGE (nunca crasha, mesmo em modo privativo/PWA) ── */
 const safeStorage = {
@@ -6602,8 +6603,27 @@ const firebaseConfig = {
   messagingSenderId: "454913796929",
   appId: "1:454913796929:web:44550491a32d50cc8bcfc0"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// Safe no-op database fallback (app funciona mesmo se Firebase falhar)
+function makeNoopRef() {
+  const r = {};
+  r.on = () => r; r.once = () => Promise.resolve({ val: () => null, forEach: () => {} });
+  r.set = () => Promise.resolve(); r.update = () => Promise.resolve();
+  r.push = () => makeNoopRef(); r.remove = () => Promise.resolve();
+  r.child = () => makeNoopRef(); r.orderByChild = () => makeNoopRef();
+  r.limitToLast = () => makeNoopRef(); r.key = null;
+  return r;
+}
+let db = { ref: makeNoopRef, _offline: true };
+try {
+  if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } else {
+    console.warn('Firebase SDK indisponível — repertório local funciona normalmente');
+  }
+} catch(e) {
+  console.warn('Firebase init falhou:', e, '— usando modo offline');
+}
 
 /* ══════════════════════
    STATE
@@ -8303,7 +8323,7 @@ function buildEnsaioLists() {
 function loadSugestoes() {
   const el = document.getElementById('ensaio-sugestoes');
   if (!el) return;
-  firebase.database().ref('sugestoes').on('value', snap => {
+  db.ref('sugestoes').on('value', snap => {
     const data = snap.val() || {};
     const items = Object.entries(data);
     if (!items.length) {
@@ -8320,10 +8340,10 @@ function loadSugestoes() {
 function addSugestao() {
   const txt = prompt('Nova sugestão de ensaio:');
   if (!txt) return;
-  firebase.database().ref('sugestoes').push({ texto: txt.trim(), ts: Date.now() });
+  db.ref('sugestoes').push({ texto: txt.trim(), ts: Date.now() });
 }
 function removeSugestao(key) {
-  firebase.database().ref('sugestoes/'+key).remove();
+  db.ref('sugestoes/'+key).remove();
 }
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -8435,7 +8455,7 @@ function addCifraToRep() {
   };
   songs.push(newSong);
   // Save to Firebase
-  firebase.database().ref('extra_songs/' + newId).set(newSong);
+  db.ref('extra_songs/' + newId).set(newSong);
   
   alert('✅ "' + title + '" adicionada ao repertório!');
   closeCifraSearch();
@@ -8583,7 +8603,7 @@ function saveGeneratedSet() {
   const name = prompt('Nome do set:', 'Set ' + new Date().toLocaleDateString('pt-BR'));
   if (!name) return;
   const setData = { name, songs: window._generatedSet, ts: Date.now(), mode: wizardState.mode };
-  firebase.database().ref('setlists').push(setData).then(() => {
+  db.ref('setlists').push(setData).then(() => {
     alert('✅ Set salvo!');
     closeWizard();
   });
@@ -8690,7 +8710,7 @@ function confirmSaveTom() {
   const delta = _pendingSaveTom;
   const newContent = transposeContent(s.content, delta);
   const newKey     = transposeKey(s.key, delta);
-  firebase.database().ref('songs_override/' + s.id).set({ key: newKey, content: newContent })
+  db.ref('songs_override/' + s.id).set({ key: newKey, content: newContent })
     .then(() => {
       s.key     = newKey;
       s.content = newContent;
