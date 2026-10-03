@@ -1402,6 +1402,8 @@ const safeStorage = {
 /* ══════════════════════════════════════════
    🎵 REPERTÓRIO COMPLETO — CANTO DAS PRETAS
    ══════════════════════════════════════════ */
+const CLAREOU_CONTENT = "Solo: 32-14-12-23-22-20-22 30-23-22-34-32-30-32 44-23-22-34-32-30-32 \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu) \n\nA                 Em7 \nA vida é pra quem sabe viver \nD                  A \nProcure aprender a arte \n                   Em7 \nPra quando apanhar não se abater \nD                   A      G D A \nGanhar e perder faz parte \n\nA \nLevante a cabeça, amigo, a vida não é tão\nruim\nEm7 \nNo mundo a gente perde \n\nMas nem sempre o jogo é assim\nD \nPra tudo tem um jeito \n                                 A      \nE se não teve jeito, ainda não chegou ao\n     G D A\nfim\n\nA \nMantenha a fé na crença, se a ciência não\ncurar\nEm7 \nPois se não tem remédio, então remediado está \nD \nNão é um perdedor \n                                  A \nQuem sabe a dor de uma derrota enfrentar \nD \nE a quem Deus prometeu, jamais faltou \n                          A    A7 \nNa hora certa o bom Deus dará \n\nD \nDeus é maior! \n                               A \nMaior é Deus, quem tá com Ele nunca está só \n        \nO que seria do mundo sem Ele\n\nEm7 \nChega de chorar \nG                           D \nVocê já sofreu demais, agora chega \n                             A \nChega de achar que tudo se acabou \n                      Em7 \nPode a dor uma noite durar \nG                          D \nMas um novo dia sempre vai raiar \n                             A \nE quando menos esperar, clareou \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu)";
+
 const songs = [
 
 /* ── BLOCO 1 ── */
@@ -7206,6 +7208,10 @@ function selectSong(id, fromRemote) {
   let song = currentSongs.find(s=>s.id===id);
   if (!song) song = songs.find(s=>s.id===id); // fallback ao array principal
   if (!song) return;
+  // Clareou: o conteúdo oficial do grupo sempre prevalece sobre caches/overrides antigos.
+  if (normStr(song.title) === 'clareou' && song.content !== CLAREOU_CONTENT) {
+    song.content = CLAREOU_CONTENT;
+  }
   selectedId = id;
   if (!fromRemote) toggleSidebar(false);
   else {
@@ -7627,8 +7633,16 @@ db.ref('songs_override').on('value', snap => {
   Object.keys(overrides).forEach(id => {
     const song = songs.find(s => s.id === parseInt(id));
     if (song && overrides[id]) {
-      if (overrides[id].key)     song.key = overrides[id].key;
-      if (overrides[id].content) song.content = overrides[id].content;
+      if (overrides[id].key) song.key = overrides[id].key;
+      if (normStr(song.title) === 'clareou') {
+        song.content = CLAREOU_CONTENT;
+        if (overrides[id].content !== CLAREOU_CONTENT) {
+          db.ref('songs_override/' + id + '/content').set(CLAREOU_CONTENT)
+            .catch(err => console.warn('Não foi possível corrigir Clareou em songs_override:', err));
+        }
+      } else if (overrides[id].content) {
+        song.content = overrides[id].content;
+      }
     }
   });
   try { buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value); } catch(e){}
@@ -9357,8 +9371,6 @@ function deleteExtraSong() {
 // Conteúdo oficial usado pelo grupo para "Clareou".
 // A música é cadastrada como extra no Firebase, então a correção é aplicada
 // quando os extras são carregados e persistida de volta no banco.
-const CLAREOU_CONTENT = "Solo: 32-14-12-23-22-20-22 30-23-22-34-32-30-32 44-23-22-34-32-30-32 \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu) \n\nA                 Em7 \nA vida é pra quem sabe viver \nD                  A \nProcure aprender a arte \n                   Em7 \nPra quando apanhar não se abater \nD                   A      G D A \nGanhar e perder faz parte \n\nA \nLevante a cabeça, amigo, a vida não é tão\nruim\nEm7 \nNo mundo a gente perde \n\nMas nem sempre o jogo é assim\nD \nPra tudo tem um jeito \n                                 A      \nE se não teve jeito, ainda não chegou ao\n     G D A\nfim\n\nA \nMantenha a fé na crença, se a ciência não\ncurar\nEm7 \nPois se não tem remédio, então remediado está \nD \nNão é um perdedor \n                                  A \nQuem sabe a dor de uma derrota enfrentar \nD \nE a quem Deus prometeu, jamais faltou \n                          A    A7 \nNa hora certa o bom Deus dará \n\nD \nDeus é maior! \n                               A \nMaior é Deus, quem tá com Ele nunca está só \n        \nO que seria do mundo sem Ele\n\nEm7 \nChega de chorar \nG                           D \nVocê já sofreu demais, agora chega \n                             A \nChega de achar que tudo se acabou \n                      Em7 \nPode a dor uma noite durar \nG                          D \nMas um novo dia sempre vai raiar \n                             A \nE quando menos esperar, clareou \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu)";
-
 // Carrega músicas extras do Firebase e mantém sincronizado
 db.ref('extra_songs').on('value', snap => {
   const extras = snap.val() || {};
