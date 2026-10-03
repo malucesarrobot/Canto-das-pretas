@@ -1272,6 +1272,7 @@
       <div id="song-toolbar">
         <button type="button" class="tool-btn" id="add-to-sl-btn" onclick="addToSetlist()" title="Adicionar ao Set List ativo" style="display:none">📋＋</button>
         <button type="button" class="tool-btn" id="rename-song-btn" onclick="renameSong()" title="Renomear esta música" style="display:none;">✏️</button>
+        <button type="button" class="tool-btn" id="edit-song-btn" onclick="openSongEditor()" title="Editar cifra, acordes e espaçamento" style="display:none;">📝 Cifra</button>
         <button type="button" class="tool-btn" id="restore-song-btn" onclick="restoreOriginalSong()" title="Restaurar conteúdo original (apaga transposição salva)" style="display:none;color:#f90;">🔄</button>
         <button type="button" class="tool-btn" id="delete-song-btn" onclick="deleteExtraSong()" title="Excluir esta música do repertório" style="display:none;color:#e05;border-color:#e05;">🗑 Excluir</button>
         <button type="button" class="save-tom-btn" id="save-tom-btn" onclick="openSaveTom()" title="Salvar tom para todos" style="display:none;">💾 Fixar Tom</button>
@@ -1402,8 +1403,6 @@ const safeStorage = {
 /* ══════════════════════════════════════════
    🎵 REPERTÓRIO COMPLETO — CANTO DAS PRETAS
    ══════════════════════════════════════════ */
-const CLAREOU_CONTENT = "Solo: 32-14-12-23-22-20-22 30-23-22-34-32-30-32 44-23-22-34-32-30-32 \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu) \n\nA                 Em7 \nA vida é pra quem sabe viver \nD                  A \nProcure aprender a arte \n                   Em7 \nPra quando apanhar não se abater \nD                   A      G D A \nGanhar e perder faz parte \n\nA \nLevante a cabeça, amigo, a vida não é tão\nruim\nEm7 \nNo mundo a gente perde \n\nMas nem sempre o jogo é assim\nD \nPra tudo tem um jeito \n                                 A      \nE se não teve jeito, ainda não chegou ao\n     G D A\nfim\n\nA \nMantenha a fé na crença, se a ciência não\ncurar\nEm7 \nPois se não tem remédio, então remediado está \nD \nNão é um perdedor \n                                  A \nQuem sabe a dor de uma derrota enfrentar \nD \nE a quem Deus prometeu, jamais faltou \n                          A    A7 \nNa hora certa o bom Deus dará \n\nD \nDeus é maior! \n                               A \nMaior é Deus, quem tá com Ele nunca está só \n        \nO que seria do mundo sem Ele\n\nEm7 \nChega de chorar \nG                           D \nVocê já sofreu demais, agora chega \n                             A \nChega de achar que tudo se acabou \n                      Em7 \nPode a dor uma noite durar \nG                          D \nMas um novo dia sempre vai raiar \n                             A \nE quando menos esperar, clareou \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu)";
-
 const songs = [
 
 /* ── BLOCO 1 ── */
@@ -7208,10 +7207,6 @@ function selectSong(id, fromRemote) {
   let song = currentSongs.find(s=>s.id===id);
   if (!song) song = songs.find(s=>s.id===id); // fallback ao array principal
   if (!song) return;
-  // Clareou: o conteúdo oficial do grupo sempre prevalece sobre caches/overrides antigos.
-  if (normStr(song.title).startsWith('clareou') && song.content !== CLAREOU_CONTENT) {
-    song.content = CLAREOU_CONTENT;
-  }
   selectedId = id;
   if (!fromRemote) toggleSidebar(false);
   else {
@@ -7244,6 +7239,8 @@ function selectSong(id, fromRemote) {
   // Botão renomear: sempre visível ao abrir qualquer música
   const _rnBtn = document.getElementById('rename-song-btn');
   if (_rnBtn) _rnBtn.style.display = 'inline-block';
+  const _edBtn = document.getElementById('edit-song-btn');
+  if (_edBtn) _edBtn.style.display = 'inline-block';
   const _rsBtn = document.getElementById('restore-song-btn');
   if (_rsBtn) _rsBtn.style.display = 'inline-block';
   // Mostrar botão de adicionar ao setlist ativo
@@ -7633,16 +7630,8 @@ db.ref('songs_override').on('value', snap => {
   Object.keys(overrides).forEach(id => {
     const song = songs.find(s => s.id === parseInt(id));
     if (song && overrides[id]) {
-      if (overrides[id].key) song.key = overrides[id].key;
-      if (normStr(song.title).startsWith('clareou')) {
-        song.content = CLAREOU_CONTENT;
-        if (overrides[id].content !== CLAREOU_CONTENT) {
-          db.ref('songs_override/' + id + '/content').set(CLAREOU_CONTENT)
-            .catch(err => console.warn('Não foi possível corrigir Clareou em songs_override:', err));
-        }
-      } else if (overrides[id].content) {
-        song.content = overrides[id].content;
-      }
+      if (overrides[id].key)     song.key = overrides[id].key;
+      if (overrides[id].content) song.content = overrides[id].content;
     }
   });
   try { buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value); } catch(e){}
@@ -9368,9 +9357,6 @@ function deleteExtraSong() {
   notify('🗑 Música removida do repertório');
 }
 
-// Conteúdo oficial usado pelo grupo para "Clareou".
-// A música é cadastrada como extra no Firebase, então a correção é aplicada
-// quando os extras são carregados e persistida de volta no banco.
 // Carrega músicas extras do Firebase e mantém sincronizado
 db.ref('extra_songs').on('value', snap => {
   const extras = snap.val() || {};
@@ -9382,19 +9368,7 @@ db.ref('extra_songs').on('value', snap => {
   Object.entries(extras).forEach(([fbId, extra]) => {
     if (!extra || !extra.title) return;
 
-    let s = extra;
-    if (normStr(extra.title).startsWith('clareou') && extra.content !== CLAREOU_CONTENT) {
-      s = { ...extra, content: CLAREOU_CONTENT };
-      db.ref('extra_songs/' + fbId + '/content').set(CLAREOU_CONTENT)
-        .catch(err => console.warn('Não foi possível atualizar a cifra de Clareou em extra_songs:', err));
-
-      const songId = typeof extra.id === 'number' ? extra.id : parseInt(extra.id);
-      if (!Number.isNaN(songId)) {
-        db.ref('songs_override/' + songId + '/content').set(CLAREOU_CONTENT)
-          .catch(err => console.warn('Não foi possível atualizar a cifra de Clareou em songs_override:', err));
-      }
-    }
-
+    const s = extra;
     if (!songs.find(x => x.id === s.id)) {
       songs.push({ ...s, id: typeof s.id === 'number' ? s.id : parseInt(s.id), _extra: true });
     }
@@ -9481,6 +9455,68 @@ window.addEventListener('resize', () => {
   timerEl.addEventListener('mouseup',   () => clearTimeout(_lp));
   timerEl.addEventListener('mouseleave',() => clearTimeout(_lp));
 })();
+// ─── EDITAR CIFRA / FORMATAÇÃO ───────────────────────────────
+function openSongEditor() {
+  if (selectedId === null) return;
+  const song = songs.find(s => s.id === selectedId);
+  if (!song) return;
+  const title = document.getElementById('song-editor-title');
+  const area  = document.getElementById('song-editor-text');
+  if (title) title.textContent = '📝 ' + song.title;
+  if (area) {
+    area.value = song.content || '';
+    area.scrollTop = 0;
+    area.scrollLeft = 0;
+  }
+  document.getElementById('song-editor-modal').style.display = 'flex';
+  setTimeout(() => { if (area) area.focus(); }, 80);
+}
+
+function closeSongEditor() {
+  document.getElementById('song-editor-modal').style.display = 'none';
+}
+
+function insertEditorText(text) {
+  const area = document.getElementById('song-editor-text');
+  if (!area) return;
+  const start = area.selectionStart ?? area.value.length;
+  const end   = area.selectionEnd ?? start;
+  area.setRangeText(text, start, end, 'end');
+  area.focus();
+}
+
+function saveSongEditor() {
+  if (selectedId === null) return;
+  const song = songs.find(s => s.id === selectedId);
+  const area = document.getElementById('song-editor-text');
+  if (!song || !area) return;
+
+  const content = area.value.replace(/\r\n/g, '\n');
+  if (!content.trim()) {
+    notify('A cifra não pode ficar vazia');
+    return;
+  }
+
+  const writes = [
+    db.ref('songs_override/' + selectedId + '/content').set(content)
+  ];
+  // Músicas adicionadas pelo próprio app também mantêm a fonte em extra_songs.
+  if (song._extra) {
+    writes.push(db.ref('extra_songs/' + selectedId + '/content').set(content));
+  }
+
+  Promise.all(writes).then(() => {
+    song.content = content;
+    document.getElementById('song-content').textContent = content;
+    closeSongEditor();
+    notify('✅ Cifra salva para todos');
+    try { selectSong(selectedId, true); } catch(e) {}
+  }).catch(err => {
+    console.warn('Erro ao salvar cifra:', err);
+    notify('Erro ao salvar a cifra');
+  });
+}
+
 // ─── RENOMEAR MÚSICA ────────────────────────────────────────
 function renameSong() {
   if (selectedId === null) return;
@@ -9950,6 +9986,22 @@ function renderGuestList() {
     });
   }
   </script>
+
+  <!-- Editor de cifra: pensado para uso no celular -->
+  <div id="song-editor-modal" style="display:none;position:fixed;inset:0;z-index:10020;background:var(--bg);flex-direction:column;">
+    <div style="display:flex;align-items:center;gap:8px;padding:max(12px,env(safe-area-inset-top)) 12px 10px;border-bottom:1px solid var(--border);background:var(--sidebar-bg);">
+      <button type="button" onclick="closeSongEditor()" style="border:1px solid var(--border);background:transparent;color:var(--text);border-radius:8px;padding:8px 11px;font-size:.85rem;">← Voltar</button>
+      <div id="song-editor-title" style="flex:1;min-width:0;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <button type="button" onclick="saveSongEditor()" style="border:none;background:var(--gold);color:#1a1209;border-radius:8px;padding:9px 13px;font-weight:800;font-size:.85rem;">💾 Salvar</button>
+    </div>
+    <div style="display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);overflow-x:auto;background:var(--sidebar-bg);">
+      <button type="button" onclick="insertEditorText(' ')" class="tool-btn" style="white-space:nowrap;">＋ espaço</button>
+      <button type="button" onclick="insertEditorText('    ')" class="tool-btn" style="white-space:nowrap;">＋ 4 espaços</button>
+      <button type="button" onclick="insertEditorText('\n')" class="tool-btn" style="white-space:nowrap;">↵ linha</button>
+    </div>
+    <textarea id="song-editor-text" wrap="off" spellcheck="false"
+      style="flex:1;width:100%;min-height:0;resize:none;border:0;outline:0;padding:16px 14px max(24px,env(safe-area-inset-bottom));background:var(--bg-card);color:var(--text);font-family:'Courier Prime',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:16px;line-height:1.65;white-space:pre;overflow:auto;tab-size:4;"></textarea>
+  </div>
 
   <!-- Modal renomear música -->
   <div id="rename-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
