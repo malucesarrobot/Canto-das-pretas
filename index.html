@@ -1271,8 +1271,7 @@
 
       <div id="song-toolbar">
         <button type="button" class="tool-btn" id="add-to-sl-btn" onclick="addToSetlist()" title="Adicionar ao Set List ativo" style="display:none">📋＋</button>
-        <button type="button" class="tool-btn" id="rename-song-btn" onclick="renameSong()" title="Renomear esta música" style="display:none;">✏️</button>
-        <button type="button" class="tool-btn" id="edit-song-btn" onclick="openSongEditor()" title="Editar cifra, acordes e espaçamento" style="display:none;">📝 Cifra</button>
+        <button type="button" class="tool-btn" id="edit-song-btn" onclick="openSongEditor()" title="Editar título, letra, cifra e espaçamento" style="display:none;">✏️ Editar</button>
         <button type="button" class="tool-btn" id="restore-song-btn" onclick="restoreOriginalSong()" title="Restaurar conteúdo original (apaga transposição salva)" style="display:none;color:#f90;">🔄</button>
         <button type="button" class="tool-btn" id="delete-song-btn" onclick="deleteExtraSong()" title="Excluir esta música do repertório" style="display:none;color:#e05;border-color:#e05;">🗑 Excluir</button>
         <button type="button" class="save-tom-btn" id="save-tom-btn" onclick="openSaveTom()" title="Salvar tom para todos" style="display:none;">💾 Fixar Tom</button>
@@ -7236,9 +7235,7 @@ function selectSong(id, fromRemote) {
   document.getElementById('song-content').style.fontSize = fontSize + 'rem';
   updateTransposeDisplay(song);
   document.getElementById('broadcast-btn').disabled = false;
-  // Botão renomear: sempre visível ao abrir qualquer música
-  const _rnBtn = document.getElementById('rename-song-btn');
-  if (_rnBtn) _rnBtn.style.display = 'inline-block';
+  // Botão único de edição: título + cifra/letra
   const _edBtn = document.getElementById('edit-song-btn');
   if (_edBtn) _edBtn.style.display = 'inline-block';
   const _rsBtn = document.getElementById('restore-song-btn');
@@ -9461,8 +9458,10 @@ function openSongEditor() {
   const song = songs.find(s => s.id === selectedId);
   if (!song) return;
   const title = document.getElementById('song-editor-title');
+  const name  = document.getElementById('song-editor-name');
   const area  = document.getElementById('song-editor-text');
-  if (title) title.textContent = '📝 ' + song.title;
+  if (title) title.textContent = '✏️ Editar música';
+  if (name) name.value = song.title || '';
   if (area) {
     area.value = song.content || '';
     area.scrollTop = 0;
@@ -9488,72 +9487,49 @@ function insertEditorText(text) {
 function saveSongEditor() {
   if (selectedId === null) return;
   const song = songs.find(s => s.id === selectedId);
+  const name = document.getElementById('song-editor-name');
   const area = document.getElementById('song-editor-text');
-  if (!song || !area) return;
+  if (!song || !name || !area) return;
 
+  const title = name.value.trim();
   const content = area.value.replace(/\r\n/g, '\n');
+  if (!title) {
+    notify('O título não pode ficar vazio');
+    return;
+  }
   if (!content.trim()) {
     notify('A cifra não pode ficar vazia');
     return;
   }
 
+  const data = { title, content };
   const writes = [
-    db.ref('songs_override/' + selectedId + '/content').set(content)
+    db.ref('songs_override/' + selectedId).update(data)
   ];
   // Músicas adicionadas pelo próprio app também mantêm a fonte em extra_songs.
   if (song._extra) {
-    writes.push(db.ref('extra_songs/' + selectedId + '/content').set(content));
+    writes.push(db.ref('extra_songs/' + selectedId).update(data));
   }
 
   Promise.all(writes).then(() => {
+    song.title = title;
     song.content = content;
+    document.getElementById('song-title').textContent = title;
     document.getElementById('song-content').textContent = content;
     closeSongEditor();
-    notify('✅ Cifra salva para todos');
+    buildList(
+      document.getElementById('search-input')?.value || '',
+      document.getElementById('key-filter')?.value || ''
+    );
+    notify('✅ Música salva para todos');
     try { selectSong(selectedId, true); } catch(e) {}
   }).catch(err => {
-    console.warn('Erro ao salvar cifra:', err);
-    notify('Erro ao salvar a cifra');
+    console.warn('Erro ao salvar música:', err);
+    notify('Erro ao salvar a música');
   });
 }
 
-// ─── RENOMEAR MÚSICA ────────────────────────────────────────
-function renameSong() {
-  if (selectedId === null) return;
-  const song = songs.find(s => s.id === selectedId);
-  if (!song) return;
-  const inp = document.getElementById('rename-input');
-  if (inp) inp.value = song.title;
-  document.getElementById('rename-modal').style.display = 'flex';
-}
-function confirmRename() {
-  if (selectedId === null) return;
-  const song = songs.find(s => s.id === selectedId);
-  const inp = document.getElementById('rename-input');
-  if (!song || !inp) return;
-  const trimmed = inp.value.trim();
-  if (!trimmed || trimmed === song.title) {
-    document.getElementById('rename-modal').style.display = 'none';
-    return;
-  }
-  // Para músicas extras: salva também no caminho extra_songs
-  if (song._extra) {
-    db.ref('extra_songs/' + selectedId + '/title').set(trimmed);
-  }
-  db.ref('songs_override/' + selectedId + '/title').set(trimmed);
-  // Atualiza cache de originais também
-  if (_songOriginals[selectedId]) _songOriginals[selectedId].title = trimmed;
-  song.title = trimmed;
-  document.getElementById('song-title').textContent = trimmed;
-  document.getElementById('rename-modal').style.display = 'none';
-  buildList(
-    document.getElementById('search-input')?.value || '',
-    document.getElementById('key-filter')?.value  || ''
-  );
-  notify('✏️ "' + trimmed + '"');
-}
-
-// Carrega overrides de nomes salvos no Firebase
+// Carrega alterações de título, tom e conteúdo salvas no Firebase
 // Cache de conteúdo original (antes dos overrides)
 const _songOriginals = {};
 songs.forEach(s => { _songOriginals[s.id] = {title:s.title, key:s.key, content:s.content}; });
@@ -9994,6 +9970,11 @@ function renderGuestList() {
       <div id="song-editor-title" style="flex:1;min-width:0;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
       <button type="button" onclick="saveSongEditor()" style="border:none;background:var(--gold);color:#1a1209;border-radius:8px;padding:9px 13px;font-weight:800;font-size:.85rem;">💾 Salvar</button>
     </div>
+    <div style="padding:10px 10px 8px;background:var(--sidebar-bg);border-bottom:1px solid var(--border);">
+      <label for="song-editor-name" style="display:block;font-size:.7rem;color:var(--text-muted);margin:0 0 5px 2px;">TÍTULO</label>
+      <input id="song-editor-name" type="text" autocomplete="off"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-family:'Raleway',sans-serif;font-size:16px;outline:none;">
+    </div>
     <div style="display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);overflow-x:auto;background:var(--sidebar-bg);">
       <button type="button" onclick="insertEditorText(' ')" class="tool-btn" style="white-space:nowrap;">＋ espaço</button>
       <button type="button" onclick="insertEditorText('    ')" class="tool-btn" style="white-space:nowrap;">＋ 4 espaços</button>
@@ -10001,18 +9982,6 @@ function renderGuestList() {
     </div>
     <textarea id="song-editor-text" wrap="off" spellcheck="false"
       style="flex:1;width:100%;min-height:0;resize:none;border:0;outline:0;padding:16px 14px max(24px,env(safe-area-inset-bottom));background:var(--bg-card);color:var(--text);font-family:'Courier Prime',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:16px;line-height:1.65;white-space:pre;overflow:auto;tab-size:4;"></textarea>
-  </div>
-
-  <!-- Modal renomear música -->
-  <div id="rename-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
-    <div style="background:var(--card-bg);border:1px solid var(--gold);border-radius:12px;padding:24px;width:85%;max-width:340px;">
-      <p style="color:var(--gold);font-weight:700;margin:0 0 12px;">✏️ Renomear música</p>
-      <input id="rename-input" type="text" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;margin-bottom:16px;">
-      <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button type="button" onclick="document.getElementById('rename-modal').style.display='none'" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;">Cancelar</button>
-        <button type="button" onclick="confirmRename()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--gold);color:#000;font-weight:700;cursor:pointer;">Salvar</button>
-      </div>
-    </div>
   </div>
 
   <!-- Modal: salvar set list -->
