@@ -9354,6 +9354,11 @@ function deleteExtraSong() {
   notify('🗑 Música removida do repertório');
 }
 
+// Conteúdo oficial usado pelo grupo para "Clareou".
+// A música é cadastrada como extra no Firebase, então a correção é aplicada
+// quando os extras são carregados e persistida de volta no banco.
+const CLAREOU_CONTENT = "DViolão & Guitarra\nSolo: 32-14-12-23-22-20-22 30-23-22-34-32-30-32 44-23-22-34-32-30-32 \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu) \n\nA                 Em7 \nA vida é pra quem sabe viver \nD                  A \nProcure aprender a arte \n                   Em7 \nPra quando apanhar não se abater \nD                   A      G D A \nGanhar e perder faz parte \n\nA \nLevante a cabeça, amigo, a vida não é tão\nruim\nEm7 \nNo mundo a gente perde \n\nMas nem sempre o jogo é assim\nD \nPra tudo tem um jeito \n                                 A      \nE se não teve jeito, ainda não chegou ao\n     G D A\nfim\n\nA \nMantenha a fé na crença, se a ciência não\ncurar\nEm7 \nPois se não tem remédio, então remediado está \nD \nNão é um perdedor \n                                  A \nQuem sabe a dor de uma derrota enfrentar \nD \nE a quem Deus prometeu, jamais faltou \n                          A    A7 \nNa hora certa o bom Deus dará \n\nD \nDeus é maior! \n                               A \nMaior é Deus, quem tá com Ele nunca está só \n        \nO que seria do mundo sem Ele\n\nEm7 \nChega de chorar \nG                           D \nVocê já sofreu demais, agora chega \n                             A \nChega de achar que tudo se acabou \n                      Em7 \nPode a dor uma noite durar \nG                          D \nMas um novo dia sempre vai raiar \n                             A \nE quando menos esperar, clareou \n\n A       G    D    A \n(Clareou ôôôô ôôôô ôôôu)";
+
 // Carrega músicas extras do Firebase e mantém sincronizado
 db.ref('extra_songs').on('value', snap => {
   const extras = snap.val() || {};
@@ -9362,8 +9367,23 @@ db.ref('extra_songs').on('value', snap => {
     if (songs[i]._extra) songs.splice(i, 1);
   }
   // Adiciona os extras do Firebase
-  Object.entries(extras).forEach(([fbId, s]) => {
-    if (s && s.title && !songs.find(x => x.id === s.id)) {
+  Object.entries(extras).forEach(([fbId, extra]) => {
+    if (!extra || !extra.title) return;
+
+    let s = extra;
+    if (normStr(extra.title) === 'clareou' && extra.content !== CLAREOU_CONTENT) {
+      s = { ...extra, content: CLAREOU_CONTENT };
+      db.ref('extra_songs/' + fbId + '/content').set(CLAREOU_CONTENT)
+        .catch(err => console.warn('Não foi possível atualizar a cifra de Clareou em extra_songs:', err));
+
+      const songId = typeof extra.id === 'number' ? extra.id : parseInt(extra.id);
+      if (!Number.isNaN(songId)) {
+        db.ref('songs_override/' + songId + '/content').set(CLAREOU_CONTENT)
+          .catch(err => console.warn('Não foi possível atualizar a cifra de Clareou em songs_override:', err));
+      }
+    }
+
+    if (!songs.find(x => x.id === s.id)) {
       songs.push({ ...s, id: typeof s.id === 'number' ? s.id : parseInt(s.id), _extra: true });
     }
   });
