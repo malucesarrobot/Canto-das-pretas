@@ -1,5 +1,5 @@
-// Canto das Pretas — Service Worker v6
-const CACHE = 'cdp-v6';
+// Canto das Pretas — Service Worker v7
+const CACHE = 'cdp-v7';
 
 const LOCAL_ASSETS = ['./', './index.html'];
 const EXTERNAL_ASSETS = [
@@ -46,12 +46,31 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Recursos locais: stale-while-revalidate
+  // Navegações/HTML local: network-first para nunca prender o app em versão antiga
+  if (new URL(url).origin === self.location.origin &&
+      (e.request.mode === 'navigate' || e.request.destination === 'document')) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' }).then(async resp => {
+        if (resp && resp.status === 200) {
+          const cache = await caches.open(CACHE);
+          cache.put(e.request, resp.clone());
+        }
+        return resp;
+      }).catch(async () => {
+        return (await caches.match(e.request)) ||
+               (await caches.match('./index.html')) ||
+               new Response('Offline', { status: 503 });
+      })
+    );
+    return;
+  }
+
+  // Demais recursos locais: stale-while-revalidate
   if (new URL(url).origin === self.location.origin) {
     e.respondWith(
       caches.open(CACHE).then(async cache => {
         const cached = await cache.match(e.request);
-        const fetchPromise = fetch(e.request).then(resp => {
+        const fetchPromise = fetch(e.request, { cache: 'no-store' }).then(resp => {
           if (resp && resp.status === 200) cache.put(e.request, resp.clone());
           return resp;
         }).catch(() => cached);
