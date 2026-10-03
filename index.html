@@ -7209,7 +7209,7 @@ function selectSong(id, fromRemote) {
   if (!song) song = songs.find(s=>s.id===id); // fallback ao array principal
   if (!song) return;
   // Clareou: o conteúdo oficial do grupo sempre prevalece sobre caches/overrides antigos.
-  if (normStr(song.title) === 'clareou' && song.content !== CLAREOU_CONTENT) {
+  if (normStr(song.title).startsWith('clareou') && song.content !== CLAREOU_CONTENT) {
     song.content = CLAREOU_CONTENT;
   }
   selectedId = id;
@@ -7634,7 +7634,7 @@ db.ref('songs_override').on('value', snap => {
     const song = songs.find(s => s.id === parseInt(id));
     if (song && overrides[id]) {
       if (overrides[id].key) song.key = overrides[id].key;
-      if (normStr(song.title) === 'clareou') {
+      if (normStr(song.title).startsWith('clareou')) {
         song.content = CLAREOU_CONTENT;
         if (overrides[id].content !== CLAREOU_CONTENT) {
           db.ref('songs_override/' + id + '/content').set(CLAREOU_CONTENT)
@@ -9383,7 +9383,7 @@ db.ref('extra_songs').on('value', snap => {
     if (!extra || !extra.title) return;
 
     let s = extra;
-    if (normStr(extra.title) === 'clareou' && extra.content !== CLAREOU_CONTENT) {
+    if (normStr(extra.title).startsWith('clareou') && extra.content !== CLAREOU_CONTENT) {
       s = { ...extra, content: CLAREOU_CONTENT };
       db.ref('extra_songs/' + fbId + '/content').set(CLAREOU_CONTENT)
         .catch(err => console.warn('Não foi possível atualizar a cifra de Clareou em extra_songs:', err));
