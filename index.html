@@ -437,14 +437,30 @@
 
     /* Notification */
     #notif {
-      position: fixed; bottom: 22px; right: 22px;
-      background: var(--gold); color: #0c0c0c;
-      padding: 11px 18px; border-radius: 8px;
-      font-weight: 700; font-size: .82rem;
-      opacity: 0; transform: translateY(8px);
-      transition: all .25s; pointer-events: none; z-index: 200;
+      position: fixed;
+      left: 50%;
+      bottom: calc(126px + env(safe-area-inset-bottom));
+      right: auto;
+      max-width: calc(100vw - 32px);
+      background: var(--gold);
+      color: #0c0c0c;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: .78rem;
+      line-height: 1.2;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0;
+      transform: translate(-50%, 8px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+      z-index: 12050;
+      box-shadow: 0 4px 16px rgba(0,0,0,.28);
     }
-    #notif.show { opacity: 1; transform: translateY(0); }
+    #notif.show { opacity: 1; transform: translate(-50%, 0); }
 
     /* Repertoire selector */
     #rep-selector {
@@ -1324,7 +1340,7 @@
       <div id="song-toolbar">
         <button type="button" class="tool-btn" id="add-to-sl-btn" onclick="addToSetlist()" title="Adicionar ao Set List ativo" style="display:none">📋＋</button>
         <button type="button" class="tool-btn" id="edit-song-btn" onclick="openSongEditor()" title="Editar título, letra, cifra e espaçamento" style="display:none;">✏️ Editar</button>
-        <button type="button" class="tool-btn" id="restore-song-btn" onclick="restoreOriginalSong()" title="Restaurar conteúdo original (apaga transposição salva)" style="display:none;color:#f90;">🔄</button>
+        <button type="button" class="tool-btn" id="restore-song-btn" onclick="restoreOriginalSong()" title="Restaurar conteúdo original" style="display:none;color:#f90;">Original</button>
         <button type="button" class="tool-btn" id="delete-song-btn" onclick="deleteExtraSong()" title="Excluir esta música do repertório" style="display:none;color:#e05;border-color:#e05;">🗑 Excluir</button>
         <button type="button" class="save-tom-btn" id="save-tom-btn" onclick="openSaveTom()" title="Salvar tom para todos" style="display:none;">💾 Fixar Tom</button>
         <div id="rehearsal-btns" title="Status de ensaio">
@@ -1336,7 +1352,7 @@
           <button type="button" class="tp-btn" onclick="transpose(-1)">♭−1</button>
           <span id="transpose-val">±0</span>
           <button type="button" class="tp-btn" onclick="transpose(1)">♯+1</button>
-          <button type="button" class="tp-btn" onclick="transpose(0)" title="Resetar">↺</button>
+          <button type="button" class="tp-btn" onclick="transpose(0)" title="Zerar transposição">0</button>
         </div>
         <div id="metro-wrap">
           <button type="button" class="tool-btn" id="metro-btn" onclick="toggleMetronome()" title="Metrônomo visual">♩ Metro</button>
@@ -8630,7 +8646,7 @@ function applyLiveSong(val, manual) {
   selectSong(id, true);
   updateBroadcastButton();
 
-  if (manual) notify('↻ Sincronizado');
+  if (manual) notify('✓ Sincronizado');
 }
 
 function syncLiveSong() {
