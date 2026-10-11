@@ -272,28 +272,29 @@
     #live-badge {
       display: none;
       align-items: center;
-      gap: 5px;
-      background: rgba(201,168,76,.12);
-      border: 1px solid rgba(201,168,76,.25);
-      padding: 3px 9px;
+      gap: 7px;
+      background: var(--gold);
+      border: 1px solid var(--gold-light);
+      padding: 5px 11px;
       border-radius: 20px;
-      font-size: .65rem;
-      font-weight: 700;
-      color: var(--gold);
+      font-size: .7rem;
+      font-weight: 800;
+      color: #0c0c0c;
       letter-spacing: .06em;
       text-transform: uppercase;
+      box-shadow: 0 0 10px rgba(201,168,76,.28);
     }
     #live-badge.show { display: flex; }
     #live-dot {
-      width: 5px; height: 5px;
+      width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--gold);
+      background: #0c0c0c;
       animation: live-beat var(--live-beat, .667s) ease-out infinite;
     }
     @keyframes live-beat {
-      0%   { opacity:1; transform:scale(1.45); box-shadow:0 0 7px currentColor; }
+      0%   { opacity:1; transform:scale(1.65); box-shadow:0 0 9px currentColor; }
       22%  { opacity:1; transform:scale(1); box-shadow:none; }
-      100% { opacity:.28; transform:scale(1); box-shadow:none; }
+      100% { opacity:.32; transform:scale(1); box-shadow:none; }
     }
 
     .topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
