@@ -9903,6 +9903,41 @@ function authSignOut() {
   });
 }
 
+// ── Migração pontual: seis cifras revisadas passam de vermelho para amarelo ──
+// Executada somente por administradora autenticada, uma única vez no Firebase.
+// Os outros quatro marcadores vermelhos não são modificados.
+let _sixReviewMigrationRunning = false;
+async function markSixReviewedAsYellow() {
+  if (_sixReviewMigrationRunning || !authUser ||
+      !ADMIN_EMAILS.has((authUser.email || '').toLowerCase())) return;
+  _sixReviewMigrationRunning = true;
+  const markerKey = '__sixToYellow_20261011';
+  const reviewIds = [36, 70, 81, 100, 103, 106]; // repertório 0
+  try {
+    const snapshot = await rehRef.once('value');
+    if (snapshot.child(markerKey).val() === 'applied') return;
+    const updates = {};
+    let moved = 0;
+    for (const id of reviewIds) {
+      const key = '0-' + id;
+      if (snapshot.child(key).val() === 'nova') {
+        updates[key] = 'ensaiar';
+        moved++;
+      }
+    }
+    // Marcador no mesmo nó, gravado atomicamente com os status.
+    // Não repetir após o próximo acesso e não reverter decisões futuras.
+    updates[markerKey] = 'applied';
+    await rehRef.update(updates);
+    if (moved) notify('🟡 ' + moved + ' música' + (moved === 1 ? '' : 's') + ' para conferir');
+  } catch (err) {
+    console.warn('Não foi possível atualizar os seis marcadores:', err);
+    try { notify('Não foi possível atualizar os marcadores no Firebase'); } catch (e) {}
+  } finally {
+    _sixReviewMigrationRunning = false;
+  }
+}
+
 // ── Concede acesso ao app ─────────────────────────────────────
 function grantAccess(user) {
   authUser = user;
@@ -9920,6 +9955,7 @@ function grantAccess(user) {
       guestsCache = snap.val() || {};
       renderGuestList();
     });
+    markSixReviewedAsYellow();
   }
 }
 
