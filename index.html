@@ -1338,7 +1338,6 @@
       <div id="repeat-alert">⚠️ Essa música já foi tocada hoje!</div>
 
       <div id="song-toolbar">
-        <button type="button" class="tool-btn" id="add-to-sl-btn" onclick="addToSetlist()" title="Adicionar ao Set List ativo" style="display:none">📋＋</button>
         <button type="button" class="tool-btn" id="edit-song-btn" onclick="openSongEditor()" title="Editar título, letra, cifra e espaçamento" style="display:none;">✏️ Editar</button>
         <button type="button" class="tool-btn" id="restore-song-btn" onclick="restoreOriginalSong()" title="Restaurar conteúdo original" style="display:none;color:#f90;">Original</button>
         <button type="button" class="tool-btn" id="delete-song-btn" onclick="deleteExtraSong()" title="Excluir esta música do repertório" style="display:none;color:#e05;border-color:#e05;">🗑 Excluir</button>
@@ -1352,7 +1351,7 @@
           <button type="button" class="tp-btn" onclick="transpose(-1)">♭−1</button>
           <span id="transpose-val">±0</span>
           <button type="button" class="tp-btn" onclick="transpose(1)">♯+1</button>
-          <button type="button" class="tp-btn" onclick="transpose(0)" title="Zerar transposição">0</button>
+          <button type="button" class="tp-btn" onclick="transpose(0)" title="Restaurar o tom original da música" aria-label="Restaurar tom original">↺ Tom</button>
         </div>
         <div id="metro-wrap">
           <button type="button" class="tool-btn" id="metro-btn" onclick="toggleMetronome()" title="Metrônomo visual">♩ Metro</button>
@@ -1360,7 +1359,7 @@
         </div>
         <button type="button" class="tool-btn" id="tele-btn" onclick="toggleTeleprompter()" title="Auto-scroll">▶ Auto</button>
         <button type="button" class="tool-btn" onclick="openYouTube()" title="Buscar no YouTube">▶ YT</button>
-        <button type="button" class="tool-btn" id="setlist-add-btn" onclick="addToSetlist()">📋 Setlist</button>
+        <button type="button" class="tool-btn" id="setlist-add-btn" onclick="addToSetlist()" title="Adicionar esta música à Setlist">📋＋ Setlist</button>
       </div>
 
       <pre id="song-content"></pre>
@@ -7313,14 +7312,9 @@ function selectSong(id, fromRemote) {
   if (_edBtn) _edBtn.style.display = 'inline-block';
   const _rsBtn = document.getElementById('restore-song-btn');
   if (_rsBtn) _rsBtn.style.display = 'inline-block';
-  // Mostrar botão de adicionar ao setlist ativo
-  const _slBtn = document.getElementById('add-to-sl-btn');
-  if (_slBtn) _slBtn.style.display = activeSetlistId ? 'inline-block' : 'none';
-  // Update setlist nav + add-to-sl buttons
+  // Atualizar navegação da setlist ativa
   (function(){
     const pb=document.getElementById('sl-prev-btn'),nb=document.getElementById('sl-next-btn'),lb=document.getElementById('sl-pos-label');
-    const ab=document.getElementById('add-to-sl-btn');
-    if(ab) ab.style.display=activeSetlistId?'inline-block':'none';
     if(!pb)return;
     if(activeSetlistId&&setlistsCache[activeSetlistId]){
       const items=(setlistsCache[activeSetlistId].items||setlistsCache[activeSetlistId].songs||[]);
