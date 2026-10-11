@@ -1075,6 +1075,55 @@
     .ag-past-label { text-align:center; color:var(--text-muted); font-size:.72rem;
                      padding:8px 0 4px; letter-spacing:.05em; }
     .ag-next { border-left: 3px solid var(--gold); }
+
+    /* ── SHOW CONTROLS: ação curta e sempre à mão ── */
+    #broadcast-btn {
+      position: fixed;
+      right: max(14px, env(safe-area-inset-right));
+      bottom: calc(68px + env(safe-area-inset-bottom));
+      z-index: 9100;
+      min-width: 112px;
+      height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 999px;
+      background: #d97706;
+      color: #fff;
+      font-family: 'Raleway', sans-serif;
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      box-shadow: 0 5px 18px rgba(0,0,0,.32);
+      cursor: pointer;
+      transition: transform .14s ease, opacity .14s ease, background .14s ease;
+    }
+    #broadcast-btn.pending { background: #d97706; }
+    #broadcast-btn.on-air,
+    #broadcast-btn.on-air:disabled {
+      background: #2e7d32;
+      color: #fff;
+      opacity: 1;
+      cursor: default;
+    }
+    #broadcast-btn:disabled:not(.on-air) {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+    #broadcast-btn:not(:disabled):active { transform: scale(.96); }
+
+    #sync-btn {
+      min-width: 34px;
+      padding: 4px 9px;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    @keyframes sync-spin { to { transform: rotate(360deg); } }
+    #sync-btn.syncing { animation: sync-spin .7s linear infinite; }
+
+    #content-area {
+      padding-bottom: max(130px, calc(120px + env(safe-area-inset-bottom))) !important;
+    }
+
   </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00b7ff">
@@ -1226,6 +1275,7 @@
         <div id="conn-dot"></div>
         <span id="conn-text">Conectando...</span>
       </div>
+      <button type="button" class="btn" id="sync-btn" onclick="syncLiveSong()" title="Sincronizar" aria-label="Sincronizar">↻</button>
       <div id="live-badge"><div id="live-dot"></div>AO VIVO</div>
       <span id="show-timer"></span><button type="button" id="timer-reset-btn" onclick="resetShowTimer()" title="Novo show / Zerar contador">↺ Zerar</button>
       <span id="online-count" title="Online agora" onclick="showOnlineList()"></span>
@@ -1241,9 +1291,6 @@
         <span style="font-size:1.05rem">A</span>
       </div>
       <button type="button" class="btn" onclick="goFullscreen()" title="Tela cheia">⛶</button>
-      <button type="button" class="btn" id="broadcast-btn" disabled onclick="broadcast()">
-        📡 EXIBIR PARA TODOS
-      </button>
     </div>
   </div>
 
@@ -1251,8 +1298,7 @@
     <div id="welcome">
       <div class="big-icon">🖤</div>
       <h2>Canto das Pretas</h2>
-      <p>Selecione uma música no menu lateral.<br>
-         Quando estiver pronta, clique em <strong style="color:var(--gold)">EXIBIR PARA TODOS</strong>.</p>
+      <p>Selecione uma música.</p>
     </div>
 
     <div id="song-display">
@@ -1309,6 +1355,10 @@
     </div><!-- /song-display -->
   </div><!-- /content-area -->
 </main>
+
+<button type="button" id="broadcast-btn" disabled onclick="broadcast()" aria-label="Exibir">
+  📡 EXIBIR
+</button>
 
 <div id="notif"></div>
 
@@ -7234,7 +7284,7 @@ function selectSong(id, fromRemote) {
   document.getElementById('song-content').textContent   = song.content;
   document.getElementById('song-content').style.fontSize = fontSize + 'rem';
   updateTransposeDisplay(song);
-  document.getElementById('broadcast-btn').disabled = false;
+  updateBroadcastButton();
   // Botão único de edição: título + cifra/letra
   const _edBtn = document.getElementById('edit-song-btn');
   if (_edBtn) _edBtn.style.display = 'inline-block';
@@ -8489,17 +8539,38 @@ function makeDraggable(row, slId, idx) {
    UPDATE showTab for agenda
    ══════════════════════ */
 // showTab replaced by new version below
+function updateBroadcastButton() {
+  const btn = document.getElementById('broadcast-btn');
+  if (!btn) return;
+
+  const hasSong = selectedId !== null && selectedId !== undefined;
+  const isLive = hasSong && broadcastId !== null && broadcastId !== undefined &&
+                 String(selectedId) === String(broadcastId);
+
+  btn.classList.toggle('on-air', isLive);
+  btn.classList.toggle('pending', hasSong && !isLive);
+  btn.textContent = isLive ? '● NO AR' : '📡 EXIBIR';
+  btn.disabled = !hasSong || isLive;
+  btn.setAttribute('aria-label', isLive ? 'No ar' : 'Exibir');
+}
+
 function broadcast() {
-  if (selectedId===null) return;
-  const song = currentSongs.find(s=>s.id===selectedId);
-  songRef.set({id: selectedId, repId: activeRep}).then(() => {
+  if (selectedId === null) return;
+  const song = currentSongs.find(s => s.id === selectedId) || songs.find(s => s.id === selectedId);
+  const payload = { id: selectedId, repId: activeRep || 0, ts: Date.now() };
+
+  songRef.set(payload).then(() => {
+    broadcastId = selectedId;
+    updateBroadcastButton();
     if (song) addToHistory(song);
     showStartRef.once('value', snap => { if (!snap.val()) showStartRef.set(Date.now()); });
-    notify('📡 Exibindo para todos!');
+    notify('📡 No ar');
     const btn = document.getElementById('broadcast-btn');
-    btn.classList.add('pulse');
-    setTimeout(()=>btn.classList.remove('pulse'), 600);
-  }).catch(err=>notify('❌ Erro: '+err.message));
+    if (btn) {
+      btn.classList.add('pulse');
+      setTimeout(() => btn.classList.remove('pulse'), 600);
+    }
+  }).catch(err => notify('❌ Erro: ' + err.message));
 }
 
 /* ══════════════════════
@@ -8509,10 +8580,9 @@ function broadcast() {
 function switchRepQuiet(n) {
   if (activeRep === n) return;
   activeRep = n;
-  currentSongs = repertoires[n];
+  currentSongs = repertoires[n] || songs;
   selectedId = null;
   document.querySelectorAll('.rep-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
-  // Rebuild list lazily so it doesn't block song display
   requestAnimationFrame(() => {
     document.getElementById('search-input').value = '';
     document.getElementById('key-filter').value = '';
@@ -8520,17 +8590,47 @@ function switchRepQuiet(n) {
   });
 }
 
-songRef.on('value', snap => {
-  const val = snap.val();
-  if (val!==null && val!==undefined) {
-    const id    = typeof val==='object' ? val.id    : val;
-    const repId = typeof val==='object' ? (0) : 0;
-    broadcastId = id;
-    switchRepQuiet(repId);
-    document.getElementById('live-badge').classList.add('show');
-    // Use rAF so the rep switch DOM work doesn't delay song render
-    requestAnimationFrame(() => selectSong(id, true));
+function applyLiveSong(val, manual) {
+  if (val === null || val === undefined) {
+    if (manual) notify('Sem música');
+    return;
   }
+
+  const rawId = (typeof val === 'object') ? val.id : val;
+  const id = (typeof rawId === 'string' && /^\d+$/.test(rawId)) ? parseInt(rawId, 10) : rawId;
+  const repId = (typeof val === 'object' && Number.isInteger(val.repId)) ? val.repId : 0;
+
+  broadcastId = id;
+  switchRepQuiet(repId);
+  document.getElementById('live-badge').classList.add('show');
+
+  // Troca a cifra imediatamente; a lista lateral pode reconstruir depois.
+  selectSong(id, true);
+  updateBroadcastButton();
+
+  if (manual) notify('↻ Sincronizado');
+}
+
+function syncLiveSong() {
+  const btn = document.getElementById('sync-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('syncing');
+  }
+
+  songRef.once('value')
+    .then(snap => applyLiveSong(snap.val(), true))
+    .catch(() => notify('Sem conexão'))
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('syncing');
+      }
+    });
+}
+
+songRef.on('value', snap => {
+  applyLiveSong(snap.val(), false);
 }, err => {
   document.getElementById('conn-text').textContent = 'Erro Firebase';
   document.getElementById('conn-dot').classList.add('offline');
