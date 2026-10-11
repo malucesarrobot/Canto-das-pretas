@@ -251,7 +251,8 @@
       flex-wrap: wrap;
     }
 
-    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    #timer-wrap { display:flex; align-items:center; gap:5px; flex:0 0 auto; white-space:nowrap; margin-left:auto; }
 
     #conn-status {
       display: flex;
@@ -703,7 +704,7 @@
     .sl-item.sl-current { background:rgba(201,168,76,.08); }
 
     /* ── SHOW TIMER ── */
-    #show-timer { font-family:'Courier Prime',monospace; font-size:.72rem; color:var(--gold); display:none; letter-spacing:.05em; font-weight:700; cursor:pointer; padding:2px 4px; border-radius:4px; transition:background .15s; }
+    #show-timer { font-family:'Courier Prime',monospace; font-size:.74rem; color:var(--gold); display:none; letter-spacing:.02em; font-weight:700; font-variant-numeric:tabular-nums; cursor:pointer; padding:5px 7px; border:1px solid var(--border); background:rgba(201,168,76,.06); border-radius:6px; transition:background .15s; white-space:nowrap; }
     #show-timer:hover { background:rgba(201,168,76,.15); }
     #show-timer.on { display:block; }
 
@@ -980,12 +981,12 @@
 
     /* ── TIMER RESET BTN ── */
     #timer-reset-btn {
-      display:none; padding:5px 12px;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:27px; height:27px; padding:0;
       background:transparent; border:1px solid var(--border);
       color:var(--text-muted); border-radius:6px;
-      font-size:.72rem; cursor:pointer; transition:color .15s, border-color .15s;
+      font-size:.84rem; cursor:pointer; transition:color .15s, border-color .15s;
     }
-    #timer-reset-btn.visible { display:inline-block; }
     #timer-reset-btn:hover { color:var(--gold); border-color:var(--gold-dark); }
 
     /* ── CIFRA SEARCH PANEL ── */
@@ -1146,6 +1147,43 @@
       padding-bottom: max(130px, calc(120px + env(safe-area-inset-bottom))) !important;
     }
 
+    /* Cabeçalho de show: o cronômetro não disputa espaço com os botões no celular. */
+    @media (max-width: 700px) {
+      #topbar {
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        grid-template-areas:"status timer" "tools tools";
+        align-items:center;
+        gap:4px 6px;
+        padding:5px max(8px, env(safe-area-inset-right)) 5px max(8px, env(safe-area-inset-left));
+      }
+      .topbar-left { grid-area:status; gap:5px; min-width:0; overflow:hidden; }
+      #conn-status { flex:0 0 auto; gap:0; }
+      #conn-text { display:none; }
+      #sync-btn { min-width:27px; padding:4px 5px; }
+      #live-badge { gap:4px; padding:4px 7px; font-size:.62rem; }
+      #live-dot { width:7px; height:7px; }
+      #sl-prev-btn, #sl-next-btn { padding:4px 5px !important; }
+      #sl-pos-label { min-width:20px !important; padding:0 !important; font-size:.62rem !important; }
+      #timer-wrap { grid-area:timer; margin:0; justify-self:end; gap:4px; }
+      #show-timer { font-size:.69rem; padding:5px 6px; }
+      #timer-reset-btn { width:26px; height:26px; }
+      .topbar-right { grid-area:tools; min-width:0; width:100%; gap:5px; flex-wrap:nowrap; justify-content:flex-end; }
+      .topbar-right .font-ctrl { margin-right:auto; gap:3px; flex:0 0 auto; }
+      .topbar-right .font-ctrl span { display:none; }
+      .topbar-right .font-ctrl .btn { font-size:.82rem !important; padding:4px 9px !important; }
+      #theme-toggle, .topbar-right .nav-btn { padding:4px 7px; }
+      #online-count { padding:2px 4px; font-size:.62rem; }
+      #signout-btn { padding:3px 4px !important; white-space:nowrap; }
+    }
+    @media (max-width: 375px) {
+      #live-badge { font-size:0; gap:0; padding:6px; }
+      #live-dot { width:11px; height:11px; }
+      #show-timer { font-size:.65rem; padding:4px 5px; }
+      .topbar-right { gap:4px; }
+      .topbar-right .font-ctrl .btn { padding:4px 7px !important; }
+    }
+
   </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00b7ff">
@@ -1298,14 +1336,17 @@
         <span id="conn-text">Conectando...</span>
       </div>
       <button type="button" class="btn" id="sync-btn" onclick="syncLiveSong()" title="Sincronizar" aria-label="Sincronizar">↻</button>
-      <div id="live-badge"><div id="live-dot"></div>AO VIVO</div>
-      <span id="show-timer"></span><button type="button" id="timer-reset-btn" onclick="resetShowTimer()" title="Novo show / Zerar contador">↺ Zerar</button>
-      <span id="online-count" title="Online agora" onclick="showOnlineList()"></span>
-      <button type="button" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema claro/escuro">🌙</button>
-        <button type="button" class="nav-btn" onclick="openSettings()" title="Configurações">⚙️</button>
-        <button type="button" id="signout-btn" onclick="authSignOut()" title="Sair" style="display:none;background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-muted);font-size:.75rem;">👤 Sair</button>
+      <div id="live-badge" title="Música ao vivo"><div id="live-dot"></div>AO VIVO</div>
+    </div>
+    <div id="timer-wrap" aria-label="Cronômetro do show">
+      <span id="show-timer" role="button" tabindex="0" aria-label="Pausar ou retomar cronômetro"></span>
+      <button type="button" id="timer-reset-btn" onclick="resetShowTimer()" title="Zerar cronômetro e iniciar novo show" aria-label="Zerar cronômetro">↺</button>
     </div>
     <div class="topbar-right">
+      <span id="online-count" title="Online agora" onclick="showOnlineList()"></span>
+      <button type="button" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema claro/escuro">🌙</button>
+      <button type="button" class="nav-btn" onclick="openSettings()" title="Configurações">⚙️</button>
+      <button type="button" id="signout-btn" onclick="authSignOut()" title="Sair" style="display:none;background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-muted);font-size:.75rem;">👤 Sair</button>
       <div class="font-ctrl">
         <span style="font-size:.8rem">A</span>
         <button type="button" class="btn" onclick="changeFont(-.15)">−</button>
