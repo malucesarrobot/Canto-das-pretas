@@ -1110,6 +1110,7 @@
       cursor: not-allowed;
     }
     #broadcast-btn:not(:disabled):active { transform: scale(.96); }
+    #sidebar.open ~ #broadcast-btn { display: none; }
 
     #sync-btn {
       min-width: 34px;
@@ -9475,6 +9476,12 @@ db.ref('extra_songs').on('value', snap => {
     document.getElementById('search-input')?.value || '',
     document.getElementById('key-filter')?.value  || ''
   );
+
+  // Se a música ao vivo chegou antes das músicas extras, completa a sincronização agora.
+  if (selectedId === null && broadcastId !== null && broadcastId !== undefined) {
+    const liveSong = songs.find(s => String(s.id) === String(broadcastId));
+    if (liveSong) selectSong(liveSong.id, true);
+  }
 });
 
 // ─── INICIALIZAÇÃO CONFIÁVEL (roda sincronamente no fim do body) ───
