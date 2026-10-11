@@ -288,9 +288,13 @@
       width: 5px; height: 5px;
       border-radius: 50%;
       background: var(--gold);
-      animation: blink 1.3s infinite;
+      animation: live-beat var(--live-beat, .667s) ease-out infinite;
     }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+    @keyframes live-beat {
+      0%   { opacity:1; transform:scale(1.45); box-shadow:0 0 7px currentColor; }
+      22%  { opacity:1; transform:scale(1); box-shadow:none; }
+      100% { opacity:.28; transform:scale(1); box-shadow:none; }
+    }
 
     .topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -7274,6 +7278,7 @@ function selectSong(id, fromRemote) {
   const detectedKey = detectFirstChord(song.content) || song.key;
   document.getElementById('song-key-tag').textContent   = 'Tom: ' + detectedKey;
   const bpm = getSongBPM(song);
+  updateLivePulse(bpm || 90);
   document.getElementById('song-bloco-tag').textContent = (bn[song.bloco]||'Bloco '+song.bloco)+(bpm?`  •  ${bpm} BPM`:'');
   const author = getAuthor(song);
   const authorEl = document.getElementById('song-author-tag');
@@ -8190,6 +8195,20 @@ function makeItemForRep(song, repIdx) {
 let metronomeActive = false;
 let metronomeInterval = null;
 
+function updateLivePulse(bpm) {
+  const badge = document.getElementById('live-badge');
+  const dot = document.getElementById('live-dot');
+  const safeBpm = Math.max(40, Math.min(220, Number(bpm) || 90));
+  const sec = 60 / safeBpm;
+  if (badge) badge.style.setProperty('--live-beat', sec.toFixed(3) + 's');
+  if (dot) {
+    // Reinicia a animação para alinhar o pulso à troca de música/metrônomo.
+    dot.style.animation = 'none';
+    void dot.offsetWidth;
+    dot.style.animation = '';
+  }
+}
+
 function toggleMetronome() {
   metronomeActive = !metronomeActive;
   document.getElementById('metro-btn').classList.toggle('active', metronomeActive);
@@ -8204,6 +8223,7 @@ function toggleMetronome() {
 }
 function startMetronome(bpm) {
   stopMetronome();
+  updateLivePulse(bpm);
   const dot = document.getElementById('metro-dot');
   metronomeInterval = setInterval(() => {
     dot.classList.add('beat');
