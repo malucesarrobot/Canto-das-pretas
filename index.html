@@ -1254,16 +1254,23 @@
     <div id="tab-menu" style="display:none;flex-direction:column;overflow-y:auto;flex:1;;min-height:0">
       
       
-      <!-- Admin: controle de visitantes -->
+      <!-- Proprietária: controle de login e relatório -->
       <div id="admin-section" class="ensaio-section" style="display:none;">
-        <div class="ensaio-section-title">🔐 Acesso Visitantes</div>
+        <div class="ensaio-section-title">🔐 Logins</div>
         <div style="display:flex;gap:8px;margin-bottom:10px;">
           <input id="guest-email-input" type="email" placeholder="email@gmail.com"
+            autocomplete="off"
             style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;">
-          <button type="button" onclick="addGuestAccess()"
-            style="padding:8px 14px;border-radius:8px;border:none;background:var(--gold);color:#000;font-weight:700;cursor:pointer;">＋</button>
+          <button type="button" onclick="addGuestAccess()" title="Autorizar e-mail"
+            style="padding:8px 14px;border-radius:8px;border:none;background:var(--gold);color:#000;font-weight:800;cursor:pointer;">＋</button>
         </div>
         <div id="guest-list" style="font-size:.85rem;"></div>
+
+        <div class="ensaio-section-title" style="margin-top:18px;">📊 Acessos</div>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px;">
+          Conta · horário · aparelho
+        </div>
+        <div id="access-report" style="font-size:.85rem;"></div>
       </div>
 
 <!-- Set Lists Base -->
@@ -8052,52 +8059,51 @@ async function gerarCifraIA() {
     txt.textContent = '❌ ' + e.message;
   }
 }
-const sessionUID  = (() => { let u=safeStorage.getItem('cdp-uid'); if(!u){u='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); safeStorage.setItem('cdp-uid',u);} return u; })();
-let userName      = safeStorage.getItem('cdp-name') || '';
-const presenceRef = db.ref('presence/'+sessionUID);
+let presenceRef = null;
+let presenceConnectionBound = false;
 
 function saveName() {
-  const n = document.getElementById('name-input').value.trim();
-  if (!n) return;
-  userName = n;
-  safeStorage.setItem('cdp-name', n);
+  // Mantido apenas por compatibilidade com versões antigas.
   document.getElementById('name-modal').style.display = 'none';
-  registerPresence();
 }
-document.getElementById('name-input').addEventListener('keydown', e => { if(e.key==='Enter') saveName(); });
 
 function registerPresence() {
+  if (!authUser || !authUser.uid) return;
+  const name = authUser.displayName || (authUser.email || '').split('@')[0] || 'Integrante';
+  presenceRef = db.ref('presence/' + authUser.uid);
+
+  if (presenceConnectionBound) return;
+  presenceConnectionBound = true;
   db.ref('.info/connected').on('value', snap => {
-    if (snap.val()) {
-      presenceRef.onDisconnect().remove();
-      presenceRef.set({name: userName || 'Músico', ts: Date.now()});
-    }
+    if (!snap.val() || !authUser || !presenceRef) return;
+    presenceRef.onDisconnect().remove();
+    presenceRef.set({
+      uid: authUser.uid,
+      name,
+      email: (authUser.email || '').toLowerCase(),
+      ts: Date.now()
+    }).catch(() => {});
   });
 }
 
 db.ref('presence').on('value', snap => {
   const p = snap.val() || {};
-  const entries = Object.values(p).filter(v=>v&&v.name);
+  const entries = Object.values(p).filter(v => v && v.name);
   const el = document.getElementById('online-count');
   if (!el) return;
   el.textContent = entries.length ? `👥 ${entries.length}` : '';
-  el.title = entries.map(v=>v.name).join(', ');
+  el.title = entries.map(v => v.name).join(', ');
   el.classList.toggle('on', entries.length > 0);
 });
 
 function showOnlineList() {
-  // show tooltip already set, just notify
   const el = document.getElementById('online-count');
   if (el && el.title) notify('Online: ' + el.title);
 }
 
-// First open: show name modal or register presence
-if (!userName) {
-  document.getElementById('name-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('name-input').focus(), 200);
-} else {
-  registerPresence();
-}
+// A identidade agora vem do login Google; não pedir nome avulso.
+const legacyNameModal = document.getElementById('name-modal');
+if (legacyNameModal) legacyNameModal.style.display = 'none';
 
 /* ══════════════════════
    YOUTUBE / CIFRACLUB
@@ -9918,11 +9924,45 @@ const PERMANENT_EMAILS = new Set([
   'malu.cesar@gmail.com',
   'prof.malufc@gmail.com'
 ]);
-const ADMIN_EMAILS = new Set(['malu.cesar@gmail.com','prof.malufc@gmail.com']);
+const OWNER_EMAILS = new Set(['malu.cesar@gmail.com','prof.malufc@gmail.com']);
+const ADMIN_EMAILS = OWNER_EMAILS; // compatibilidade com funções antigas
 
 let authUser = null;
 let guestsCache = {};
-const guestsRef = db.ref('auth/guests');
+let allowlistCache = {};
+let accessLogsCache = {};
+let securitySessionsCache = {};
+let securityHeartbeat = null;
+let activeSecuritySessionId = null;
+let activeSecuritySessionRef = null;
+
+const guestsRef       = db.ref('auth/guests'); // legado: migrado para allowlist
+const allowlistRef    = db.ref('auth/allowlist');
+const accessLogsRef   = db.ref('auth/accessLogs');
+const securitySessRef = db.ref('auth/sessions');
+
+function isOwner(user = authUser) {
+  return !!(user && OWNER_EMAILS.has((user.email || '').toLowerCase()));
+}
+function emailKey(email) {
+  return (email || '').trim().toLowerCase().replace(/\./g, '%2E');
+}
+function deviceLabel() {
+  const ua = navigator.userAgent || '';
+  if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return 'iPad';
+  if (/iPhone/i.test(ua)) return 'iPhone';
+  if (/Android/i.test(ua)) return /Mobile/i.test(ua) ? 'Android' : 'Tablet Android';
+  return 'Computador';
+}
+function newSessionId() {
+  try {
+    const a = new Uint32Array(4);
+    crypto.getRandomValues(a);
+    return Array.from(a).map(n => n.toString(36)).join('');
+  } catch(e) {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+}
 
 // ── Login / Logout ────────────────────────────────────────────
 function signInWithGoogle() {
@@ -9954,7 +9994,23 @@ function signInWithGoogle() {
     if (btn) btn.disabled = false;
   }
 }
-function authSignOut() {
+async function releaseOwnSecuritySession() {
+  clearInterval(securityHeartbeat);
+  securityHeartbeat = null;
+  const ref = activeSecuritySessionRef;
+  const sid = activeSecuritySessionId;
+  activeSecuritySessionRef = null;
+  activeSecuritySessionId = null;
+  if (!ref || !sid) return;
+  try {
+    const snap = await ref.once('value');
+    const val = snap.val();
+    if (val && val.sessionId === sid) await ref.remove();
+  } catch(e) {}
+}
+
+async function authSignOut() {
+  await releaseOwnSecuritySession();
   firebase.auth().signOut().then(() => {
     document.getElementById('auth-overlay').style.display = 'flex';
     document.getElementById('auth-error').textContent = '';
@@ -10000,25 +10056,176 @@ async function markSixReviewedAsYellow() {
   }
 }
 
+// ── Segurança de sessão e relatório de acessos ────────────────
+async function startUniqueSecuritySession(user) {
+  const sid = newSessionId();
+  const ref = securitySessRef.child(user.uid);
+  const now = Date.now();
+  const record = {
+    sessionId: sid,
+    uid: user.uid,
+    email: (user.email || '').toLowerCase(),
+    name: user.displayName || '',
+    device: deviceLabel(),
+    startedAt: now,
+    lastSeen: now
+  };
+
+  // O login mais recente assume a conta. A sessão anterior detecta a troca e encerra.
+  await ref.set(record);
+  activeSecuritySessionId = sid;
+  activeSecuritySessionRef = ref;
+
+  accessLogsRef.push({
+    uid: user.uid,
+    email: record.email,
+    name: record.name,
+    device: record.device,
+    at: now
+  }).catch(e => console.warn('Falha ao registrar acesso:', e));
+
+  ref.on('value', snap => {
+    const val = snap.val();
+    if (!authUser || authUser.uid !== user.uid) return;
+    if (val && val.sessionId && val.sessionId !== activeSecuritySessionId) {
+      clearInterval(securityHeartbeat);
+      securityHeartbeat = null;
+      firebase.auth().signOut().finally(() => {
+        const overlay = document.getElementById('auth-overlay');
+        const loading = document.getElementById('auth-loading');
+        const btn = document.getElementById('google-signin-btn');
+        const err = document.getElementById('auth-error');
+        if (overlay) overlay.style.display = 'flex';
+        if (loading) loading.style.display = 'none';
+        if (btn) btn.style.display = 'flex';
+        if (err) err.textContent = 'Este login foi aberto em outro aparelho.';
+      });
+    }
+  });
+
+  clearInterval(securityHeartbeat);
+  securityHeartbeat = setInterval(async () => {
+    if (!activeSecuritySessionRef || !activeSecuritySessionId) return;
+    try {
+      const snap = await activeSecuritySessionRef.once('value');
+      const val = snap.val();
+      if (val && val.sessionId === activeSecuritySessionId) {
+        await activeSecuritySessionRef.child('lastSeen').set(Date.now());
+      }
+    } catch(e) {}
+  }, 30000);
+}
+
+async function seedAllowlistFromLegacy() {
+  if (!isOwner()) return;
+  const updates = {};
+  PERMANENT_EMAILS.forEach(email => {
+    updates[emailKey(email)] = { email: email.toLowerCase(), permanent: true, updatedAt: Date.now() };
+  });
+  try {
+    const snap = await guestsRef.once('value');
+    const guests = snap.val() || {};
+    Object.values(guests).forEach(g => {
+      if (!g || !g.email) return;
+      const email = String(g.email).toLowerCase();
+      updates[emailKey(email)] = {
+        email,
+        addedBy: g.addedBy || authUser.email || '',
+        addedAt: g.addedAt || Date.now(),
+        expires: g.expires || null
+      };
+    });
+    if (Object.keys(updates).length) await allowlistRef.update(updates);
+  } catch(e) {
+    console.warn('Migração de allowlist:', e);
+  }
+}
+
+function formatAccessTime(ts) {
+  if (!ts) return '—';
+  try {
+    return new Date(ts).toLocaleString('pt-BR', {
+      day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'
+    });
+  } catch(e) { return '—'; }
+}
+function escHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function renderAccessReport() {
+  const el = document.getElementById('access-report');
+  if (!el || !isOwner()) return;
+  const now = Date.now();
+  const entries = Object.entries(accessLogsCache)
+    .map(([key,v]) => ({key,...(v||{})}))
+    .sort((a,b) => (b.at||0) - (a.at||0))
+    .slice(0,80);
+
+  if (!entries.length) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:.8rem;margin:4px 0;">Sem registros ainda.</p>';
+    return;
+  }
+
+  el.innerHTML = entries.map(a => {
+    const sess = securitySessionsCache[a.uid] || {};
+    const online = sess.sessionId && (now - (sess.lastSeen || 0) < 90000);
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <strong style="font-size:.8rem;flex:1;word-break:break-all;">${escHtml(a.email || a.name || 'Conta')}</strong>
+        <span style="font-size:.65rem;color:${online ? '#2e9d50' : 'var(--text-muted)'};">${online ? '● AGORA' : ''}</span>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px;">
+        ${escHtml(formatAccessTime(a.at))} · ${escHtml(a.device || 'Aparelho')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startOwnerSecurityPanel() {
+  if (!isOwner()) return;
+  seedAllowlistFromLegacy();
+  allowlistRef.on('value', snap => {
+    allowlistCache = snap.val() || {};
+    renderGuestList();
+  });
+  accessLogsRef.limitToLast(100).on('value', snap => {
+    accessLogsCache = snap.val() || {};
+    renderAccessReport();
+  });
+  securitySessRef.on('value', snap => {
+    securitySessionsCache = snap.val() || {};
+    renderAccessReport();
+  });
+}
+
 // ── Concede acesso ao app ─────────────────────────────────────
-function grantAccess(user) {
+async function grantAccess(user) {
   authUser = user;
+  try {
+    await startUniqueSecuritySession(user);
+  } catch(e) {
+    console.warn('Sessão segura indisponível:', e);
+  }
+
   document.getElementById('auth-overlay').style.display = 'none';
   const signOutBtn = document.getElementById('signout-btn');
   if (signOutBtn) {
     signOutBtn.style.display = 'inline-block';
     signOutBtn.title = user.email;
   }
-  // Admin: mostra painel de visitantes
+
   const adminSec = document.getElementById('admin-section');
-  if (adminSec) adminSec.style.display = ADMIN_EMAILS.has(user.email.toLowerCase()) ? 'block' : 'none';
-  if (ADMIN_EMAILS.has(user.email.toLowerCase())) {
-    guestsRef.on('value', snap => {
-      guestsCache = snap.val() || {};
-      renderGuestList();
-    });
+  if (adminSec) adminSec.style.display = isOwner(user) ? 'block' : 'none';
+
+  if (isOwner(user)) {
+    startOwnerSecurityPanel();
     markSixReviewedAsYellow();
   }
+
+  // Presença sempre vinculada ao UID autenticado.
+  registerPresence();
 }
 
 // ── Bloqueia acesso ───────────────────────────────────────────
@@ -10039,19 +10246,38 @@ function denyAccess(email) {
 
 // ── Verifica se e-mail tem acesso ─────────────────────────────
 function checkAccess(user) {
-  const email = (user.email||'').toLowerCase();
-  if (PERMANENT_EMAILS.has(email)) { grantAccess(user); return; }
+  const email = (user.email || '').toLowerCase();
+  if (!email || user.emailVerified === false) {
+    denyAccess(user.email || 'Conta sem e-mail verificado');
+    return;
+  }
+  if (OWNER_EMAILS.has(email) || PERMANENT_EMAILS.has(email)) {
+    grantAccess(user);
+    return;
+  }
+
   const loading = document.getElementById('auth-loading');
-  if (loading) { loading.style.display = 'block'; }
-  guestsRef.once('value', snap => {
-    const guests = snap.val() || {};
+  if (loading) loading.style.display = 'block';
+
+  allowlistRef.child(emailKey(email)).once('value').then(snap => {
+    const item = snap.val();
     const now = Date.now();
-    const ok = Object.values(guests).some(g =>
-      g.email && g.email.toLowerCase() === email &&
-      (!g.expires || g.expires > now)
-    );
-    if (ok) grantAccess(user); else denyAccess(user.email);
-  });
+    const ok = !!(item && (!item.expires || item.expires > now));
+    if (ok) {
+      grantAccess(user);
+      return;
+    }
+
+    // Compatibilidade temporária com convites antigos.
+    return guestsRef.once('value').then(oldSnap => {
+      const guests = oldSnap.val() || {};
+      const legacyOk = Object.values(guests).some(g =>
+        g && g.email && String(g.email).toLowerCase() === email &&
+        (!g.expires || g.expires > now)
+      );
+      if (legacyOk) grantAccess(user); else denyAccess(user.email);
+    });
+  }).catch(() => denyAccess(user.email));
 }
 
 // ── Estado de autenticação ────────────────────────────────────
@@ -10082,33 +10308,47 @@ firebase.auth().onAuthStateChanged(user => {
   checkAccess(user);
 });
 
-// ── Gerenciar visitantes (admin) ──────────────────────────────
+// ── Gerenciar logins autorizados (somente proprietária) ──────
 function addGuestAccess() {
+  if (!isOwner()) return;
   const inp = document.getElementById('guest-email-input');
   if (!inp) return;
   const email = inp.value.trim().toLowerCase();
   if (!email || !email.includes('@')) { notify('E-mail inválido'); return; }
-  guestsRef.push({ email, addedBy: authUser?.email||'', addedAt: Date.now() })
-    .then(() => { inp.value=''; notify('✅ ' + email + ' autorizado(a)'); });
+
+  allowlistRef.child(emailKey(email)).set({
+    email,
+    addedBy: authUser?.email || '',
+    addedAt: Date.now()
+  }).then(() => {
+    inp.value = '';
+    notify('✅ Autorizado');
+  }).catch(() => notify('Erro ao autorizar'));
 }
 function removeGuestAccess(key) {
-  guestsRef.child(key).remove()
-    .then(() => notify('🚫 Acesso removido'));
+  if (!isOwner()) return;
+  allowlistRef.child(key).remove()
+    .then(() => notify('🚫 Revogado'))
+    .catch(() => notify('Erro ao revogar'));
 }
 function renderGuestList() {
   const list = document.getElementById('guest-list');
-  if (!list) return;
-  const entries = Object.entries(guestsCache);
+  if (!list || !isOwner()) return;
+  const entries = Object.entries(allowlistCache)
+    .filter(([key,g]) => g && g.email && !OWNER_EMAILS.has(String(g.email).toLowerCase()))
+    .sort((a,b) => String(a[1].email).localeCompare(String(b[1].email)));
+
   if (!entries.length) {
-    list.innerHTML = '<p style="color:var(--text-muted);font-size:.8rem;margin:4px 0;">Nenhum visitante ativo</p>';
+    list.innerHTML = '<p style="color:var(--text-muted);font-size:.8rem;margin:4px 0;">Nenhum login adicional.</p>';
     return;
   }
+
   list.innerHTML = entries.map(([key,g]) =>
     `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <span style="flex:1;font-size:.82rem;word-break:break-all;">${g.email||''}</span>
+      <span style="flex:1;font-size:.82rem;word-break:break-all;">${escHtml(g.email || '')}</span>
       <button type="button" onclick="removeGuestAccess('${key}')"
         style="flex-shrink:0;padding:4px 10px;border-radius:6px;border:none;background:#c0392b;color:#fff;cursor:pointer;font-size:.8rem;">
-        ✕ Revogar
+        Revogar
       </button>
     </div>`
   ).join('');
