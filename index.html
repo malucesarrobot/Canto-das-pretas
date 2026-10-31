@@ -7100,6 +7100,8 @@ try {
   if (typeof firebase !== 'undefined' && firebase.initializeApp) {
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
+    // Segurança: não abrir o Realtime Database antes de identificar a conta Google.
+    try { db.goOffline(); } catch(e) {}
   } else {
     console.warn('Firebase SDK indisponível — repertório local funciona normalmente');
   }
@@ -10028,6 +10030,7 @@ async function authSignOut() {
     document.getElementById('google-signin-btn').style.display = 'flex';
     document.getElementById('signout-btn').style.display = 'none';
     authUser = null;
+    try { db.goOffline(); } catch(e) {}
   });
 }
 
@@ -10246,6 +10249,7 @@ async function grantAccess(user) {
 
 // ── Bloqueia acesso ───────────────────────────────────────────
 function denyAccess(email) {
+  try { db.goOffline(); } catch(e) {}
   const loading = document.getElementById('auth-loading');
   const errDiv  = document.getElementById('auth-error');
   const btn     = document.getElementById('google-signin-btn');
@@ -10318,7 +10322,8 @@ firebase.auth().onAuthStateChanged(user => {
     if (btn)     btn.style.display = 'flex';
     return;
   }
-  // Logado — verifica autorização
+  // Logado — conecta o banco já com a identidade Google e verifica autorização.
+  try { db.goOnline(); } catch(e) {}
   if (loading) loading.style.display = 'block';
   if (btn)     btn.style.display = 'none';
   checkAccess(user);
