@@ -1352,7 +1352,7 @@
     <div class="topbar-right">
       <span id="online-count" title="Online agora" onclick="showOnlineList()"></span>
       <button type="button" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema claro/escuro">🌙</button>
-      <button type="button" class="nav-btn" onclick="openSettings()" title="Configurações">⚙️</button>
+      <button type="button" class="nav-btn" id="settings-btn" onclick="openSettings()" title="Configurações" style="display:none;">⚙️</button>
       <button type="button" id="signout-btn" onclick="authSignOut()" title="Sair" style="display:none;background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-muted);font-size:.75rem;">👤 Sair</button>
       <div class="font-ctrl">
         <span style="font-size:.8rem">A</span>
@@ -7993,16 +7993,24 @@ notesRef.on('value', snap => {
 const configRef = db.ref('config');
 let cachedApiKey = '';
 
-// Load API key on startup
-configRef.child('anthropicKey').once('value', snap => {
-  if (snap.val()) {
-    cachedApiKey = snap.val();
-    document.getElementById('api-key-status').textContent = '✅ Chave configurada';
-    document.getElementById('ai-gen-btn').style.opacity = '1';
+async function loadOwnerApiKey() {
+  if (!isOwner()) return;
+  try {
+    const snap = await configRef.child('anthropicKey').once('value');
+    if (snap.val()) {
+      cachedApiKey = snap.val();
+      const status = document.getElementById('api-key-status');
+      const aiBtn = document.getElementById('ai-gen-btn');
+      if (status) status.textContent = '✅ Chave configurada';
+      if (aiBtn) aiBtn.style.opacity = '1';
+    }
+  } catch(e) {
+    console.warn('Configuração privada indisponível:', e);
   }
-});
+}
 
 function openSettings() {
+  if (!isOwner()) return;
   const inp = document.getElementById('api-key-input');
   inp.value = cachedApiKey ? '••••••••••••••' : '';
   document.getElementById('api-key-status').textContent = cachedApiKey ? '✅ Chave configurada' : 'Sem chave';
@@ -8010,6 +8018,7 @@ function openSettings() {
   setTimeout(() => inp.focus(), 100);
 }
 function saveApiKey() {
+  if (!isOwner()) return;
   const val = document.getElementById('api-key-input').value.trim();
   if (!val || val.startsWith('•')) { document.getElementById('settings-modal').style.display='none'; return; }
   configRef.child('anthropicKey').set(val);
@@ -8021,6 +8030,7 @@ function saveApiKey() {
 }
 
 async function gerarCifraIA() {
+  if (!isOwner()) { notify('Recurso privado'); return; }
   const q = getAIQuery();
   if (!q) return notify('Digite o nome da música no campo de busca IA');
   if (!cachedApiKey) {
@@ -10216,11 +10226,17 @@ async function grantAccess(user) {
     signOutBtn.title = user.email;
   }
 
+  const owner = isOwner(user);
   const adminSec = document.getElementById('admin-section');
-  if (adminSec) adminSec.style.display = isOwner(user) ? 'block' : 'none';
+  const settingsBtn = document.getElementById('settings-btn');
+  const aiBtn = document.getElementById('ai-gen-btn');
+  if (adminSec) adminSec.style.display = owner ? 'block' : 'none';
+  if (settingsBtn) settingsBtn.style.display = owner ? '' : 'none';
+  if (aiBtn) aiBtn.style.display = owner ? '' : 'none';
 
-  if (isOwner(user)) {
+  if (owner) {
     startOwnerSecurityPanel();
+    loadOwnerApiKey();
     markSixReviewedAsYellow();
   }
 
