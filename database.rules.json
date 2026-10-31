@@ -1,0 +1,112 @@
+{
+  "rules": {
+    "currentSong": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "history": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "setlists": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "activeSetlistId": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "notes": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "favorites": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "rehearsal": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "events": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "extra_songs": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "songs_override": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "sugestoes": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "sessionStart": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "showPauseTs": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "showPausedMs": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "showStartTs": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "showStopTs": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())"
+    },
+    "config": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')",
+      ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')"
+    },
+    "presence": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists())",
+      "$uid": {
+        ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists()) && auth.uid == $uid",
+        ".validate": "!newData.exists() || (newData.child('uid').val() == auth.uid && newData.child('email').val() == auth.token.email.toLowerCase())"
+      }
+    },
+    "auth": {
+      "allowlist": {
+        ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')",
+        "$email": {
+          ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')",
+          ".validate": "!newData.exists() || (newData.hasChild('email') && newData.child('email').isString())"
+        }
+      },
+      "guests": {
+        ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')",
+        ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')"
+      },
+      "accessLogs": {
+        ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')",
+        ".indexOn": [
+          "at"
+        ],
+        "$logId": {
+          ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists()) && !data.exists() && newData.child('uid').val() == auth.uid && newData.child('email').val() == auth.token.email.toLowerCase()",
+          ".validate": "newData.hasChildren(['uid','email','device','at']) && newData.child('at').isNumber()"
+        }
+      },
+      "sessions": {
+        ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')",
+        "$uid": {
+          ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists()) && (auth.uid == $uid || (auth != null && auth.token.email != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com')))",
+          ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && ((auth.token.email.toLowerCase() == 'malu.cesar@gmail.com' || auth.token.email.toLowerCase() == 'prof.malufc@gmail.com') || root.child('auth/allowlist').child(auth.token.email.toLowerCase().replace('.', '%2E')).exists()) && auth.uid == $uid",
+          ".validate": "!newData.exists() || (newData.child('uid').val() == auth.uid && newData.child('email').val() == auth.token.email.toLowerCase() && newData.child('sessionId').isString())"
+        }
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}
