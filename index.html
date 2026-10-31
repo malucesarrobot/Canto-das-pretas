@@ -1184,6 +1184,28 @@
       .topbar-right .font-ctrl .btn { padding:4px 7px !important; }
     }
 
+
+    /* ── TOQUE LONGO: escolher Set List ── */
+    #setlist-picker {
+      display:none; position:fixed; inset:0; z-index:13000;
+      background:rgba(0,0,0,.58); align-items:flex-end; justify-content:center;
+    }
+    #setlist-picker.open { display:flex; }
+    #setlist-picker-box {
+      width:min(560px,100%); max-height:72vh; overflow:auto;
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:18px 18px 0 0; padding:14px 14px calc(18px + env(safe-area-inset-bottom));
+      box-shadow:0 -8px 30px rgba(0,0,0,.38);
+    }
+    #setlist-picker-title { font-weight:800; margin:2px 4px 10px; font-size:.9rem; }
+    .setlist-pick-btn {
+      width:100%; text-align:left; margin:5px 0; padding:12px 13px;
+      border-radius:10px; border:1px solid var(--border);
+      background:var(--card-bg); color:var(--text); font:inherit; font-size:.86rem;
+    }
+    .setlist-pick-btn strong { display:block; }
+    .setlist-pick-new { color:var(--gold); border-color:var(--gold-dark); }
+    .song-item { -webkit-touch-callout:none; user-select:none; }
   </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00b7ff">
@@ -1430,6 +1452,13 @@
 </button>
 
 <div id="notif"></div>
+
+<div id="setlist-picker" onclick="if(event.target===this)closeSetlistPicker()">
+  <div id="setlist-picker-box">
+    <div id="setlist-picker-title">Adicionar ao Set List</div>
+    <div id="setlist-picker-list"></div>
+  </div>
+</div>
 
 <!-- Modal: nome do músico (primeira abertura) -->
 <div id="name-modal" class="modal-overlay" style="display:none">
@@ -7376,6 +7405,7 @@ function makeItem(song) {
   const played = isTitlePlayedInSession(song.title);
   const badges = `<span class="song-badges">${isFav?'<span class="badge-fav">★</span>':''}${reh?`<span class="badge-reh ${reh}" data-ensaio="1" title="Ver na aba Ensaio"></span>`:''}${played?'<span class="badge-hist">✓</span>':''}</span>`;
   el.innerHTML = `<span class="song-name">${song.title}</span><span class="song-key">${song.key}</span>${badges}`;
+  bindLongPressToSong(el, song, activeRep);
   el.addEventListener('click', (ev)=>{
     // Clicar no marcador colorido leva à aba Ensaio
     if (ev.target && ev.target.dataset && ev.target.dataset.ensaio) {
@@ -7698,6 +7728,100 @@ function useSetlist(id) {
 function toggleExpandSetlist(id) {
   expandedSetlistId = expandedSetlistId === id ? null : id;
   renderSetlists();
+}
+
+let _pickerSong = null;
+let _pickerRepId = 0;
+
+function closeSetlistPicker() {
+  const p = document.getElementById('setlist-picker');
+  if (p) p.classList.remove('open');
+}
+
+function addSongToSpecificSetlist(slId, song, repId) {
+  const sl = setlistsCache[slId];
+  if (!sl || !song) return;
+  if (!sl.items) sl.items = sl.songs || [];
+  if (sl.items.some(i => String(i.id) === String(song.id) && Number(i.repId ?? repId) === Number(repId))) {
+    notify('Já está no Set List');
+    closeSetlistPicker();
+    return;
+  }
+  sl.items.push({id:song.id, repId, title:song.title, key:song.key});
+  setlistsRef.child(slId + '/items').set(sl.items)
+    .then(() => {
+      renderSetlists();
+      notify('📋 Adicionado');
+      closeSetlistPicker();
+    })
+    .catch(err => notify('Erro ao adicionar'));
+}
+
+function showSetlistPicker(song, repId) {
+  _pickerSong = song;
+  _pickerRepId = repId;
+  const p = document.getElementById('setlist-picker');
+  const list = document.getElementById('setlist-picker-list');
+  const title = document.getElementById('setlist-picker-title');
+  if (!p || !list || !song) return;
+
+  title.textContent = song.title;
+  const ids = Object.keys(setlistsCache)
+    .sort((a,b)=>(setlistsCache[b].createdAt||0)-(setlistsCache[a].createdAt||0));
+
+  list.innerHTML = ids.map(id => {
+    const sl=setlistsCache[id]||{};
+    const count=(sl.items||sl.songs||[]).length;
+    return `<button type="button" class="setlist-pick-btn" onclick="addSongToSpecificSetlist('${id}',_pickerSong,_pickerRepId)">
+      <strong>${escHtml(sl.name||'Set List')}</strong>
+      <span style="font-size:.7rem;color:var(--text-muted)">${count} música${count===1?'':'s'}</span>
+    </button>`;
+  }).join('') + `
+    <button type="button" class="setlist-pick-btn setlist-pick-new" onclick="createSetlistFromPicker()">＋ Novo Set List</button>`;
+
+  p.classList.add('open');
+}
+
+function createSetlistFromPicker() {
+  closeSetlistPicker();
+  const song = _pickerSong;
+  const repId = _pickerRepId;
+  openNewSetlistModal();
+  modalCallback = (name) => {
+    createSetlist(name);
+    setTimeout(() => {
+      if (activeSetlistId && song) addSongToSpecificSetlist(activeSetlistId, song, repId);
+    }, 120);
+  };
+}
+
+function bindLongPressToSong(el, song, repId) {
+  let timer = null;
+  let longPressed = false;
+  const clear = () => { if (timer) clearTimeout(timer); timer = null; };
+
+  el.addEventListener('pointerdown', ev => {
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+    longPressed = false;
+    clear();
+    timer = setTimeout(() => {
+      longPressed = true;
+      try { navigator.vibrate?.(30); } catch(e) {}
+      showSetlistPicker(song, repId);
+    }, 520);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(type => el.addEventListener(type, clear));
+  el.addEventListener('click', ev => {
+    if (longPressed) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      longPressed = false;
+    }
+  }, true);
+  el.addEventListener('contextmenu', ev => {
+    ev.preventDefault();
+    showSetlistPicker(song, repId);
+  });
 }
 
 function addToSetlist() {
@@ -8318,6 +8442,7 @@ function makeItemForRep(song, repIdx) {
   const el = document.createElement('div');
   el.className = 'song-item';
   el.innerHTML = `<span class="song-name">${song.title}</span><span class="song-key">${song.key}</span>`;
+  bindLongPressToSong(el, song, repIdx);
   el.addEventListener('click', () => {
     switchRepertoire(repIdx);
     // Use requestAnimationFrame to let DOM settle after switchRepertoire
@@ -9087,34 +9212,80 @@ function buildEnsaioLists() {
   loadSugestoes();
 }
 
-// ─── SUGESTÕES DE ENSAIO (Firebase) ──────────────────────────
-function loadSugestoes() {
+// ─── SUGESTÕES DE ENSAIO (Firebase + backup local) ────────────
+let sugestoesBound = false;
+let sugestoesCache = {};
+
+function pendingSugestoes() {
+  try { return JSON.parse(safeStorage.getItem('cdp-sugestoes-pending') || '{}'); }
+  catch(e) { return {}; }
+}
+function savePendingSugestoes(obj) {
+  try { safeStorage.setItem('cdp-sugestoes-pending', JSON.stringify(obj)); } catch(e) {}
+}
+function renderSugestoes() {
   const el = document.getElementById('ensaio-sugestoes');
   if (!el) return;
-  db.ref('sugestoes').on('value', snap => {
-    const data = snap.val() || {};
-    const items = Object.entries(data);
-    if (!items.length) {
-      el.innerHTML = '<div style="font-size:.75rem;color:var(--text-muted);padding:6px 0;">Sem sugestões</div>';
-      return;
-    }
-    el.innerHTML = items.map(([k,v]) => `
-      <div class="sugestao-item">
-        <span style="flex:1;font-size:.82rem;">${escHtml(v.texto||'')}</span>
-        <button type="button" onclick="removeSugestao('${k}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;">✕</button>
-      </div>`).join('');
+  const merged = {...pendingSugestoes(), ...sugestoesCache};
+  const items = Object.entries(merged).sort((a,b)=>(b[1]?.ts||0)-(a[1]?.ts||0));
+  if (!items.length) {
+    el.innerHTML = '<div style="font-size:.75rem;color:var(--text-muted);padding:6px 0;">Sem sugestões</div>';
+    return;
+  }
+  el.innerHTML = items.map(([k,v]) => `
+    <div class="sugestao-item">
+      <span style="flex:1;font-size:.82rem;">${escHtml(String(v?.texto||''))}</span>
+      <button type="button" onclick="removeSugestao('${k}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;">✕</button>
+    </div>`).join('');
+}
+function flushPendingSugestoes() {
+  const pending = pendingSugestoes();
+  Object.entries(pending).forEach(([key,val]) => {
+    db.ref('sugestoes/'+key).set(val).then(() => {
+      const latest = pendingSugestoes();
+      delete latest[key];
+      savePendingSugestoes(latest);
+      renderSugestoes();
+    }).catch(()=>{});
   });
+}
+function loadSugestoes() {
+  if (sugestoesBound) { renderSugestoes(); flushPendingSugestoes(); return; }
+  sugestoesBound = true;
+  db.ref('sugestoes').on('value', snap => {
+    sugestoesCache = snap.val() || {};
+    renderSugestoes();
+    flushPendingSugestoes();
+  }, () => renderSugestoes());
 }
 function addSugestao() {
   const txt = prompt('Nova sugestão de ensaio:');
-  if (!txt) return;
-  db.ref('sugestoes').push({ texto: txt.trim(), ts: Date.now() });
+  if (!txt || !txt.trim()) return;
+  const ref = db.ref('sugestoes').push();
+  const key = ref.key || ('local_' + Date.now());
+  const item = { texto: txt.trim(), ts: Date.now(), by: authUser?.email || '' };
+
+  const pending = pendingSugestoes();
+  pending[key] = item;
+  savePendingSugestoes(pending);
+  renderSugestoes();
+
+  ref.set(item).then(() => {
+    const latest = pendingSugestoes();
+    delete latest[key];
+    savePendingSugestoes(latest);
+    notify('💡 Salva');
+  }).catch(() => notify('💾 Salva neste aparelho'));
 }
 function removeSugestao(key) {
-  db.ref('sugestoes/'+key).remove();
-}
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const pending = pendingSugestoes();
+  if (pending[key]) {
+    delete pending[key];
+    savePendingSugestoes(pending);
+  }
+  delete sugestoesCache[key];
+  renderSugestoes();
+  db.ref('sugestoes/'+key).remove().catch(()=>{});
 }
 
 // ─── TIMER: INITIALIZE ZEROED + RESET ────────────────────────
