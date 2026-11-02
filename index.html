@@ -7425,6 +7425,17 @@ function selectSong(id, fromRemote) {
   if (teleprompting) toggleTeleprompter();
   document.getElementById('song-content').textContent   = song.content;
   document.getElementById('song-content').style.fontSize = fontSize + 'rem';
+  // Indicador simples para a integrante conferir que abriu a versão atualizada.
+  let songRevision = document.getElementById('song-cifra-revision');
+  if (!songRevision) {
+    songRevision = document.createElement('span');
+    songRevision.id = 'song-cifra-revision';
+    songRevision.style.cssText = 'display:none;font-size:.72rem;opacity:.8;margin:5px 8px 8px 0;';
+    document.getElementById('song-author-tag').insertAdjacentElement('afterend', songRevision);
+  }
+  const isReviewedSong = Boolean(VERIFIED_SONG_PATCHES[verifiedSongTitleKey(song.title)]);
+  songRevision.textContent = isReviewedSong ? 'Cifra de ensaio atualizada • 02/11/2026' : '';
+  songRevision.style.display = isReviewedSong ? 'inline-block' : 'none';
   // Um link real, clicável, para o conteúdo integral da faixa confirmada.
   let cifraSource = document.getElementById('song-cifra-source');
   if (!cifraSource) {
@@ -10596,16 +10607,13 @@ function renderGuestList() {
   </div>
 
 
-  <!-- Service Worker — limpa cache antigo e registra novo -->
+  <!-- Atualizações do PWA sem perder o cache offline nem desregistrar o serviço -->
   <script>
   if ('serviceWorker' in navigator) {
-    // Desregistra SWs antigos e limpa todos os caches antes de registrar
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
-    });
-    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+        .then(reg => reg.update().catch(() => {}))
+        .catch(e => console.warn('Não foi possível registrar atualização do app', e));
     });
   }
   </script>
