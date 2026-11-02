@@ -7816,6 +7816,7 @@ db.ref('songs_override').on('value', snap => {
       if (overrides[id].content) song.content = overrides[id].content;
     }
   });
+  try { applyVerifiedSongPatches(); } catch(e){}
   try { buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value); } catch(e){}
   if (selectedId !== null && overrides[selectedId]) {
     try { selectSong(selectedId, true); } catch(e){}
@@ -9596,6 +9597,60 @@ function confirmSaveTom() {
 
 
 
+
+// ─── CIFRAS VERIFICADAS — revisão novembro/2026 ──────────────
+// Fontes confirmadas pela usuária: PDFs Cifra Club + texto fornecido.
+// Mantém estas versões como referência do app mesmo se houver override antigo no Firebase.
+const VERIFIED_SONG_PATCHES = Object.create(null);
+
+function verifiedSongTitleKey(title) {
+  return String(title || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function registerVerifiedFromCurrent(title, targetKey, shift) {
+  const k = verifiedSongTitleKey(title);
+  const song = songs.find(s => verifiedSongTitleKey(s.title) === k);
+  if (!song) return;
+  VERIFIED_SONG_PATCHES[k] = {
+    key: targetKey,
+    content: shift ? transposeContent(song.content, shift) : song.content
+  };
+}
+
+// Músicas já incorporadas ao repertório estático.
+registerVerifiedFromCurrent('Coisa de Pele', 'F', -4);
+registerVerifiedFromCurrent('Será que é Amor', 'A', 0);
+registerVerifiedFromCurrent('Falsa Consideração', 'D', 2);
+registerVerifiedFromCurrent('Sampa', 'C', -2);
+registerVerifiedFromCurrent('Sorriso Aberto', 'F', 0);
+
+// Músicas adicionais carregadas pelo Firebase.
+VERIFIED_SONG_PATCHES[verifiedSongTitleKey('Folhas Secas')] = {
+  key: 'G',
+  content: "Tom: G\n\nAm  D7        G        E7\nLa.... Raia raia raia\n       Am     D7     G   D7\nLaia raia.... ra.... ra\n\nG                    Bm7/5-  E7\nQuando eu piso em folhas secas\nAm                D#7  D7\nCaídas de uma Mangueira\nAm               C     Bbº\nPenso na minha escola\nG       E7        Am    D7\nE nos poetas, da minha estação\nG\nprimeira\n               Bm7/5-  E7\nNão sei quantas vezes\nAm            D#7   D7\nSubi o morro cantando\nAm                  C  Bbº\nSempre o sol me queimando\nG    E7      Am  D7  G   B7\nE assim vou me acabando\n\nEm       Bm\nQuando o tempo avisar\nBm7/5-  E7   Am\nQue eu não posso mais\nAm Bbm Bm Cm\ncantar\nCm  Cm6  Bm            F7/9\nSei, que vou sentir saudades\nBb7/13 A7/13       A7\nAo lado do meu violão\nAm        D7   G\nDa minha mocidade"
+};
+VERIFIED_SONG_PATCHES[verifiedSongTitleKey('Malandro Sou Eu')] = {
+  key: 'A',
+  content: "Tom: A\n\n[Intro] D      E/D     C#m7    F#m7     Bm7    E7   A   E7\n\nA\nSegura teu santo, seu moço\nG#m7(5-) C#7\nTeu santo é de barro\nF#m                          Em7    A7\nQue sarro dei volta no mundo voltei pra ficar\nD                  D#º\nEu vim lá do fundo do poço\nA             F#m\nNão posso dar mole pra não afundar\nB7\nQuem marca bobeira engole poeira\nBm7             E7\nE rasteira até pode levar\nA\nMalandro que sou, eu não vou vacilar\nC#7\nSou o que sou ninguém vai me mudar\nF#7\nE que tentou teve que rebolar\nB7\nSem conseguir\nD        E/D\nEscorregando daqui e dali\nC#m7          F#m\nMalandreando eu vim e venci\nB7                             E7 E7(13-)\nE no sufoco da vida foi onde aprendi\nA\nMalandro que sou, eu não vou vacilar\nC#7\nSou o que sou ninguém vai me mudar\nF#7\nE que tentou teve que rebolar\nB7\nSem conseguir\nD      E/D\nEscorregando daqui e dali\nC#m7         F#m\nMalandreando eu vim e venci\nB7           E7                A\nE no sufoco da vida foi onde aprendi\n\nA7\n(Por isso que eu vou)\nD      E/D   C#m7\nVou, eu vou por ai\nF#m          Bm7      E7       A A/G\nSempre por ai, esse mundo é meu\nD    E/D  C#m7  F#m           Bm7\nE onde quer que eu vá em qualquer lugar\nE7       A\nMalandro sou eu"
+};
+VERIFIED_SONG_PATCHES[verifiedSongTitleKey('Tô Fazendo a Minha Parte')] = {
+  key: 'D',
+  content: "Tom: D\n\nD                           Em7         F#m7\nto saindo pra batalha pelo pão de cada dia\nBm7               E7/9      A7     D\na fé que trago no peito é a minha garantia\nG              D         G                      D\nDeus me livre das maldades me guarde onde quer que eu vá\nB7/13-        E7/9      A7       D\nto fazendo a minha parte um dia eu chego la\n\nD B7 Em7            A7       D\ntodo mês eu recebo um salário covarde\nB7/13-     Em7          A7    D F#7\ne o desconto vai quase a metade o que sobra mal da pra comer\nBm        Bm7+    Bm7       Bm6      E7/9\nsou pobre criado em comunidade lutando com diguinidade\nA7 Am D7\ntentando sobreviver....\nG            A7        D    Am7 D7\nquem sabe o que quer nunca perde a esperança não\nG                   C#m5-/7 F#7\npor mais que a bonança demore a chegar\nBm             Bm7+      Bm7       Bm6       E7/9\na dificuldade tambem nos ensina a dar a volta por cima\nA7          D\ne jamais deixar de sonhar"
+};
+
+function applyVerifiedSongPatches() {
+  songs.forEach(song => {
+    const p = VERIFIED_SONG_PATCHES[verifiedSongTitleKey(song.title)];
+    if (!p) return;
+    song.key = p.key;
+    song.content = p.content;
+  });
+}
+
+applyVerifiedSongPatches();
+
 // ─── MÚSICAS ADICIONADAS VIA BUSCA (extra_songs) ─────────────
 function deleteExtraSong() {
   if (selectedId === null) return;
@@ -9629,6 +9684,7 @@ db.ref('extra_songs').on('value', snap => {
       songs.push({ ...s, id: typeof s.id === 'number' ? s.id : parseInt(s.id), _extra: true });
     }
   });
+  try { applyVerifiedSongPatches(); } catch(e) {}
   rebuildCatalog(); // mantém allCatalog atualizado com extras
   buildList(
     document.getElementById('search-input')?.value || '',
