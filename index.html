@@ -7505,9 +7505,9 @@ function showSuggestions(song) {
   const seqSong = currentSongs[repIdx2 + 1] || (repIdx2 > 0 ? currentSongs[repIdx2 - 1] : null);
   if (seqSong) used.push(seqSong.title);
 
-  // 2. Mesmo tom (prime 37)
-  const songKey  = detectFirstChord(song.content) || song.key;
-  const tomPool  = others.filter(s => (detectFirstChord(s.content)||s.key) === songKey);
+  // 2. Mesma nota de entrada registrada (não o primeiro acorde da cifra)
+  const songKey  = song.key || '';
+  const tomPool  = songKey ? others.filter(s => s.key === songKey) : [];
   const keySong  = pickDet(tomPool, gIdx, 37, used);
   if (keySong) used.push(keySong.title);
 
