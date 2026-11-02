@@ -7141,6 +7141,7 @@ let modalCallback   = null;
 let favCache        = {};
 let rehCache        = {};
 let notesCache      = {};
+let songOverridesCache = {};
 
 /* ══════════════════════
    RICH SONG METADATA
@@ -7409,8 +7410,9 @@ function selectSong(id, fromRemote) {
   document.getElementById('welcome').style.display = 'none';
   document.getElementById('song-display').classList.add('on');
   document.getElementById('song-title').textContent     = song.title;
-  const detectedKey = detectFirstChord(song.content) || song.key;
-  document.getElementById('song-key-tag').textContent   = 'Tom: ' + detectedKey;
+  // O campo Tom mostra a nota de entrada registrada, nunca o primeiro acorde da cifra.
+  const entryNote = song.key || 'Não definida';
+  document.getElementById('song-key-tag').textContent   = 'Tom: ' + entryNote;
   const bpm = getSongBPM(song);
   updateLivePulse(bpm || 90);
   document.getElementById('song-bloco-tag').textContent = (bn[song.bloco]||'Bloco '+song.bloco)+(bpm?`  •  ${bpm} BPM`:'');
@@ -7806,19 +7808,24 @@ function renderSetlists() {
   }
 }
 
-// ─── CARREGA TONS FIXADOS (songs_override) ───────────────────
-db.ref('songs_override').on('value', snap => {
-  const overrides = snap.val() || {};
-  Object.keys(overrides).forEach(id => {
-    const song = songs.find(s => s.id === parseInt(id));
-    if (song && overrides[id]) {
-      if (overrides[id].key)     song.key = overrides[id].key;
-      if (overrides[id].content) song.content = overrides[id].content;
-    }
+// ─── ALTERAÇÕES SALVAS: sempre prevalecem sobre as cifras-base ─────
+function applySongOverrides() {
+  Object.entries(songOverridesCache).forEach(([id, saved]) => {
+    const song = songs.find(s => s.id === Number(id));
+    if (!song || !saved) return;
+    if (typeof saved.title === 'string' && saved.title.trim()) song.title = saved.title;
+    if (typeof saved.key === 'string' && saved.key.trim()) song.key = saved.key;
+    if (typeof saved.content === 'string' && saved.content.trim()) song.content = saved.content;
   });
-  try { applyVerifiedSongPatches(); } catch(e){}
+}
+db.ref('songs_override').on('value', snap => {
+  songOverridesCache = snap.val() || {};
+  try {
+    applyVerifiedSongPatches();
+    applySongOverrides();
+  } catch(e) { console.warn('Falha ao aplicar cifras e alterações salvas', e); }
   try { buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value); } catch(e){}
-  if (selectedId !== null && overrides[selectedId]) {
+  if (selectedId !== null && songOverridesCache[selectedId]) {
     try { selectSong(selectedId, true); } catch(e){}
   }
 });
@@ -8208,12 +8215,12 @@ function getAuthor(song) { const t=song.title; return authorData[t]||authorData[
 function updateTransposeDisplay(song) {
   const saveTomBtn = document.getElementById('save-tom-btn');
   if (saveTomBtn) saveTomBtn.style.display = (transposeOffset !== 0) ? 'inline-block' : 'none';
-  const baseKey = detectFirstChord(song.content) || song.key;
+  const baseKey = song.key || '';
   if (transposeOffset === 0) {
     document.getElementById('song-key-tag').textContent = 'Tom: ' + baseKey;
     document.getElementById('transpose-val').textContent = '±0';
   } else {
-    const newKey = transposeNote(baseKey, transposeOffset, FLAT_ROOT.has(baseKey));
+    const newKey = baseKey ? transposeKey(baseKey, transposeOffset) : 'Não definida';
     document.getElementById('song-key-tag').textContent = `Tom: ${baseKey} → ${newKey}`;
     document.getElementById('transpose-val').textContent = (transposeOffset>0?'+':'')+transposeOffset;
   }
@@ -9599,8 +9606,9 @@ function confirmSaveTom() {
 
 
 // ─── CIFRAS VERIFICADAS — revisão novembro/2026 ──────────────
-// Fontes confirmadas pela usuária: PDFs Cifra Club + texto fornecido.
-// Mantém estas versões como referência do app mesmo se houver override antigo no Firebase.
+// Fontes: PDFs Cifra Club + texto fornecido pela banda.
+// A tonalidade harmônica do PDF não define a nota de entrada da voz.
+// Alterações salvas no Firebase prevalecem sobre estas cifras-base.
 const VERIFIED_SONG_PATCHES = Object.create(null);
 
 function verifiedSongTitleKey(title) {
@@ -9644,8 +9652,9 @@ function applyVerifiedSongPatches() {
   songs.forEach(song => {
     const p = VERIFIED_SONG_PATCHES[verifiedSongTitleKey(song.title)];
     if (!p) return;
-    song.key = p.key;
-    song.content = p.content;
+    // Tom harmônico do PDF não define a nota inicial da voz.
+    // Preserva a nota de entrada cadastrada pela banda.
+    if (p.content) song.content = p.content;
   });
 }
 
@@ -9684,7 +9693,7 @@ db.ref('extra_songs').on('value', snap => {
       songs.push({ ...s, id: typeof s.id === 'number' ? s.id : parseInt(s.id), _extra: true });
     }
   });
-  try { applyVerifiedSongPatches(); } catch(e) {}
+  try { applyVerifiedSongPatches(); applySongOverrides(); } catch(e) { console.warn('Falha ao atualizar músicas extras', e); }
   rebuildCatalog(); // mantém allCatalog atualizado com extras
   buildList(
     document.getElementById('search-input')?.value || '',
