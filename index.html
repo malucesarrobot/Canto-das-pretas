@@ -7425,6 +7425,24 @@ function selectSong(id, fromRemote) {
   if (teleprompting) toggleTeleprompter();
   document.getElementById('song-content').textContent   = song.content;
   document.getElementById('song-content').style.fontSize = fontSize + 'rem';
+  // Um link real, clicável, para o conteúdo integral da faixa confirmada.
+  let cifraSource = document.getElementById('song-cifra-source');
+  if (!cifraSource) {
+    cifraSource = document.createElement('a');
+    cifraSource.id = 'song-cifra-source';
+    cifraSource.target = '_blank';
+    cifraSource.rel = 'noopener noreferrer';
+    cifraSource.style.cssText = 'display:none;font-size:.82rem;color:var(--gold);margin:8px 0;text-decoration:underline;';
+    document.getElementById('song-author-tag').insertAdjacentElement('afterend', cifraSource);
+  }
+  if (song.cifraSourceUrl === "https://www.cifraclub.com.br/beth-carvalho/andanca/") {
+    cifraSource.href = song.cifraSourceUrl;
+    cifraSource.textContent = 'Abrir letra e cifra integral de Andança';
+    cifraSource.style.display = 'inline-block';
+  } else {
+    cifraSource.removeAttribute('href');
+    cifraSource.style.display = 'none';
+  }
   updateTransposeDisplay(song);
   updateBroadcastButton();
   // Botão único de edição: título + cifra/letra
@@ -7809,13 +7827,21 @@ function renderSetlists() {
 }
 
 // ─── ALTERAÇÕES SALVAS: sempre prevalecem sobre as cifras-base ─────
+// Revisão 2 das cifras: mantém o conteúdo aprovado visível para todas as integrantes.
+// Edições anteriores continuam guardadas no Firebase, mas não apagam a revisão nova.
+// Qualquer edição feita depois desta atualização recebe a revisão 2 e prevalece normalmente.
+const ENSAIO_CIFRA_REVISION = 2;
 function applySongOverrides() {
   Object.entries(songOverridesCache).forEach(([id, saved]) => {
     const song = songs.find(s => s.id === Number(id));
     if (!song || !saved) return;
+    const isReviewed = Boolean(VERIFIED_SONG_PATCHES[verifiedSongTitleKey(song.title)]);
+    const isCurrentEdit = Number(saved.ensaioCifraRevision || 0) >= ENSAIO_CIFRA_REVISION;
+    if (typeof saved.key === 'string' && saved.key.trim()) song.key = saved.key; // nota de entrada da voz
     if (typeof saved.title === 'string' && saved.title.trim()) song.title = saved.title;
-    if (typeof saved.key === 'string' && saved.key.trim()) song.key = saved.key;
-    if (typeof saved.content === 'string' && saved.content.trim()) song.content = saved.content;
+    if (typeof saved.content === 'string' && saved.content.trim() && (!isReviewed || isCurrentEdit)) {
+      song.content = saved.content;
+    }
   });
 }
 db.ref('songs_override').on('value', snap => {
@@ -8217,7 +8243,7 @@ function updateTransposeDisplay(song) {
   if (saveTomBtn) saveTomBtn.style.display = (transposeOffset !== 0) ? 'inline-block' : 'none';
   const baseKey = song.key || '';
   if (transposeOffset === 0) {
-    document.getElementById('song-key-tag').textContent = 'Tom: ' + baseKey;
+    document.getElementById('song-key-tag').textContent = 'Tom: ' + (baseKey || 'nota de entrada não informada');
     document.getElementById('transpose-val').textContent = '±0';
   } else {
     const newKey = baseKey ? transposeKey(baseKey, transposeOffset) : 'Não definida';
@@ -9590,7 +9616,7 @@ function confirmSaveTom() {
   const delta = _pendingSaveTom;
   const newContent = transposeContent(s.content, delta);
   const newKey     = transposeKey(s.key, delta);
-  db.ref('songs_override/' + s.id).update({ key: newKey, content: newContent })
+  db.ref('songs_override/' + s.id).update({ key: newKey, content: newContent, ensaioCifraRevision: ENSAIO_CIFRA_REVISION })
     .then(() => {
       s.key     = newKey;
       s.content = newContent;
@@ -9611,10 +9637,11 @@ function confirmSaveTom() {
 // Edições salvas em songs_override continuam prevalecendo sobre estas referências.
 const VERIFIED_SONG_PATCHES = Object.create(null);
 function verifiedSongTitleKey(title) {
-  return String(title || '')
+  const normalized = String(title || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/(\d)\.(?=\d{3}(?:\D|$))/g, '$1') // 1.800 Colinas = 1800 Colinas
     .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return normalized === 'andancas' ? 'andanca' : normalized;
 }
 
 // Conselho — Conselho_Almir_Guineto_G.pdf; harmonia da fonte: G
@@ -9667,16 +9694,32 @@ VERIFIED_SONG_PATCHES[verifiedSongTitleKey("Sorriso Aberto")] = {
   content: "[Harmonia da cifra: F]\n\n[Intro] Em7(5-) A7 Dm\n        Dm/C E7 A7\n\nDm           C\nLá laiá laiá laiá\n        Bb7\nLaiá laiá laiá\n        A7\nLaiá laiá laiá\nDm                C\nLá laiá laiá laiá laiá laiá\n        Bb7\nLaiá laiá laiá\n        A7\nLaiá laiá laiá\nGm          A7           Dm                           Em7(5-)   A7\nLá laiá laiá laiá laiá samba aqui,samba ali, samba la\nDm          Gm        Dm    A/C#\nLá laiá laiá laiá laiá\nDm          A7          Dm    A7\nLá laiá laiá laiá laiá, pois é\nDm                  C\nÉ, foi ruim a bessa\n                 Bb7\nMas pensei depressa\n           Em7(5-)              A7       Dm\nNuma solução para a depressão, fui ao violão\n              C\nFiz alguns acordes\n              Bb7\nMas pela desordem\n           Em7(5-)                   A7\nDo meu coração, não foi mole não\nEm7(5-)         A7         Dm      Dm/C\nQuase que sofri desilusão\nBb7             C7            F\nQuase que sofri desilusão\n\n    C7\nTristeza\nF\nTristeza foi assim\n           C                   C#º\nSe aproveitando pra tentar\n       Dm               Gm\nSe aproximar, ai de mim\n                    Em7(5-)       A7    Dm\nSe não fosse o pandeiro e o ganzá e o tamborim\n                  Gm A7     Dm\nPra ajudar a marcar, meu tamborim\n                  Gm A7\nPra ajudar a marcar\nDm                    C\nLogo, eu com meu sorriso aberto\n         Bb7                   Em7(5-) A7\nE o paraíso perto, pra vida melhorar\n    Dm                       C\nMalandro desse tipo que balança mas não cai\n               Bb7\nDe qualquer jeito vai\n             Em7(5-) A7\nFicar bem mais legal\n    Bb7          A7              Dm    (Bb7 A7)\nPra nivelar a vida em alto astral\n\n    Bb7      A7                Dm    A7\nPra nivelar a vida em alto astral\n     Bb7       A7              Dm\nPra nivelar a vida em alto astral\n\n                             A7\nSamba aqui, samba ali, samba la"
 };
 
+// Andança (Beth Carvalho) — canção confirmada pela banda.
+// Por direitos autorais, a letra integral permanece na fonte original.
+VERIFIED_SONG_PATCHES[verifiedSongTitleKey("Andança")] = {
+  content: "[Harmonia de referência: D]\n\n[Intro]\nD7M   Bb7M   Eb7M   Em7(5-)   A7(13)\n\n[Primeira parte]\nD7M   Bb7M   Eb7M   Em7(5-)   A7(13)\n\n[Refrão]\nD7M   E/D   E/G#   A7\nA   A/C#   A   G   A/C#   A   D\n\n[Segunda parte]\nD7M   Bb7M   Eb7M   Em7(5-)   A7(13)\n\n[Refrão final]\nD7M   E/D   E/G#   A7\nA   A/C#   A   G   A/C#   A   D\n\n[Cifra integral e letra: abra o link de referência abaixo.]",
+  sourceUrl: "https://www.cifraclub.com.br/beth-carvalho/andanca/"
+};
+
 function applyVerifiedSongPatches() {
   songs.forEach(song => {
     const p = VERIFIED_SONG_PATCHES[verifiedSongTitleKey(song.title)];
     if (!p) return;
-    // Tom harmônico do PDF não define a nota inicial da voz.
-    // Preserva a nota de entrada cadastrada pela banda.
+    // Tom harmônico da cifra não define a nota inicial da voz.
+    // Preserva song.key e as marcações de ensaio do Firebase.
     if (p.content) song.content = p.content;
+    if (p.sourceUrl) song.cifraSourceUrl = p.sourceUrl;
   });
 }
 
+function ensureAndancaInCatalog() {
+  const exists = songs.some(s => verifiedSongTitleKey(s.title) === 'andanca');
+  if (exists) return;
+  // Exibição de segurança se o Firebase não retornar a faixa: sem substituir IDs existentes.
+  const id = Math.max(108, ...songs.map(s => Number(s.id) || 0)) + 1;
+  songs.push({ id, bloco: 26, title: 'Andança', key: '', content: '', _andancaFallback: true });
+}
+ensureAndancaInCatalog();
 applyVerifiedSongPatches();
 
 // ─── MÚSICAS ADICIONADAS VIA BUSCA (extra_songs) ─────────────
@@ -9699,25 +9742,26 @@ function deleteExtraSong() {
 // Carrega músicas extras do Firebase e mantém sincronizado
 db.ref('extra_songs').on('value', snap => {
   const extras = snap.val() || {};
-  // Remove extras que não estão mais no Firebase
+  // Reconstrói o catálogo dinâmico sem alterar os IDs/estados salvos no Firebase.
   for (let i = songs.length - 1; i >= 0; i--) {
-    if (songs[i]._extra) songs.splice(i, 1);
+    if (songs[i]._extra || songs[i]._andancaFallback) songs.splice(i, 1);
   }
-  // Adiciona os extras do Firebase
   Object.entries(extras).forEach(([fbId, extra]) => {
     if (!extra || !extra.title) return;
-
-    const s = extra;
-    if (!songs.find(x => x.id === s.id)) {
-      songs.push({ ...s, id: typeof s.id === 'number' ? s.id : parseInt(s.id), _extra: true });
+    const id = Number(extra.id ?? fbId);
+    if (!Number.isFinite(id)) return;
+    if (!songs.some(s => s.id === id)) {
+      songs.push({ ...extra, id, _extra: true });
     }
   });
+  ensureAndancaInCatalog();
   try { applyVerifiedSongPatches(); applySongOverrides(); } catch(e) { console.warn('Falha ao atualizar músicas extras', e); }
-  rebuildCatalog(); // mantém allCatalog atualizado com extras
+  rebuildCatalog();
   buildList(
     document.getElementById('search-input')?.value || '',
-    document.getElementById('key-filter')?.value  || ''
+    document.getElementById('key-filter')?.value || ''
   );
+  if (activeTab === 'ensaio') buildEnsaioLists();
 
   // Se a música ao vivo chegou antes das músicas extras, completa a sincronização agora.
   if (selectedId === null && broadcastId !== null && broadcastId !== undefined) {
@@ -9851,7 +9895,7 @@ function saveSongEditor() {
     return;
   }
 
-  const data = { title, content };
+  const data = { title, content, ensaioCifraRevision: ENSAIO_CIFRA_REVISION };
   const writes = [
     db.ref('songs_override/' + selectedId).update(data)
   ];
@@ -9878,32 +9922,10 @@ function saveSongEditor() {
   });
 }
 
-// Carrega alterações de título, tom e conteúdo salvas no Firebase
-// Cache de conteúdo original (antes dos overrides)
+// Referência para o botão "Restaurar" — não cria outro listener do Firebase.
+// A única aplicação de sobrescritas fica em applySongOverrides().
 const _songOriginals = {};
 songs.forEach(s => { _songOriginals[s.id] = {title:s.title, key:s.key, content:s.content}; });
-
-db.ref('songs_override').on('value', snap => {
-  const overrides = snap.val() || {};
-  Object.entries(overrides).forEach(([id, data]) => {
-    const song = songs.find(s => s.id === parseInt(id));
-    if (song) {
-      if (data.title)   song.title   = data.title;
-      if (data.key)     song.key     = data.key;
-      if (data.content) song.content = data.content;
-    }
-  });
-  // Re-aplicar overrides em músicas extras que podem ter chegado depois
-  songs.filter(s=>s._extra).forEach(s => {
-    const d = overrides[s.id];
-    if (d) {
-      if (d.title)   s.title   = d.title;
-      if (d.key)     s.key     = d.key;
-      if (d.content) s.content = d.content;
-    }
-  });
-  buildList('','');
-});
 
 function restoreOriginalSong() {
   if (selectedId===null) return;
