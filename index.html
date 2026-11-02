@@ -7504,9 +7504,9 @@ function selectSong(id, fromRemote) {
    SUGGESTIONS — rotação determinística por catálogo completo
    Usar primos garante que clicar em sugestões cobre todo o catálogo sem loops
    ══════════════════════ */
-let allCatalog = songs.map(s=>({...s,_rep:0}));
+let allCatalog = uniqueSongsForDisplay(songs).map(s=>({...s,_rep:0}));
 function rebuildCatalog() {
-  allCatalog = songs.map(s=>({...s,_rep:0}));
+  allCatalog = uniqueSongsForDisplay(songs).map(s=>({...s,_rep:0}));
 }
 
 function getGlobalIdx(song) {
@@ -8274,6 +8274,37 @@ function toggleGlobalSearch() {
   buildList(document.getElementById('search-input').value, document.getElementById('key-filter').value);
 }
 
+// Deduplicação visual: não apaga registros, IDs, cifras ou marcações do Firebase.
+// A seleção prioriza o cadastro efetivamente marcado para ensaio.
+function uniqueSongsForDisplay(items) {
+  const result = [];
+  const indices = new Map();
+  const ranking = (song) => {
+    const id = song.id;
+    const rehearsal = rehCache[activeRep+'-'+id] || rehCache['0-'+id] || '';
+    const status = {nova: 3, ensaiar: 2, ok: 1}[rehearsal] || 0;
+    const selected = id === selectedId ? 1 : 0;
+    const broadcast = id === broadcastId ? 1 : 0;
+    const favorite = favCache[activeRep+'-'+id] || favCache['0-'+id] ? 1 : 0;
+    const edited = songOverridesCache[id] && songOverridesCache[id].ensaioCifraRevision ? 1 : 0;
+    const detailed = Math.min(String(song.content || '').trim().length, 5000);
+    return status * 10000000 + selected * 1000000 + broadcast * 100000 +
+           favorite * 10000 + edited * 6000 + detailed;
+  };
+  for (const song of items) {
+    if (!song || !song.title) continue;
+    const key = verifiedSongTitleKey(song.title);
+    if (!key || !indices.has(key)) {
+      if (key) indices.set(key, result.length);
+      result.push(song);
+    } else {
+      const pos = indices.get(key);
+      if (ranking(song) > ranking(result[pos])) result[pos] = song;
+    }
+  }
+  return result;
+}
+
 function buildList(nameQ='', keyQ='') {
   // Guarda contra currentSongs inválido
   if (!currentSongs || !Array.isArray(currentSongs)) currentSongs = songs;
@@ -8292,7 +8323,8 @@ function buildList(nameQ='', keyQ='') {
         const byL = res.filter(s => !s.title.toLowerCase().includes(ln) && s.content && normStr(s.content).includes(ln));
         res = [...byT, ...byL];
       }
-      if (lk) res = res.filter(s => s.key.toLowerCase().startsWith(lk));
+      if (lk) res = res.filter(s => String(s.key || '').toLowerCase().startsWith(lk));
+      res = uniqueSongsForDisplay(res);
       if (!res.length) return;
       const hdr = document.createElement('div');
       hdr.className = 'global-result-rep';
@@ -8342,9 +8374,10 @@ function buildList(nameQ='', keyQ='') {
       .map(x=>x.s);
     if (!filtered.length) filtered = currentSongs; // show all if nothing matches
   }
+  filtered = uniqueSongsForDisplay(filtered);
   if (!filtered.length) { list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.8rem;">Nenhuma música encontrada</div>'; return; }
   if (ln || lk) { filtered.forEach(s => list.appendChild(makeItem(s))); return; }
-  const blocos = [...new Set(currentSongs.map(s=>s.bloco))];
+  const blocos = [...new Set(filtered.map(s=>s.bloco))];
   const bn = getBlocoNames();
   blocos.forEach(b => {
     const group = filtered.filter(s=>s.bloco===b);
@@ -9110,8 +9143,9 @@ function showTab(name) {
 
 // ─── ENSAIO LISTS ─────────────────────────────────────────────
 function buildEnsaioLists() {
-  const novas   = songs.filter(s => rehCache[activeRep+'-'+s.id] === 'nova');
-  const revisar = songs.filter(s => rehCache[activeRep+'-'+s.id] === 'ensaiar');
+  const distinctSongs = uniqueSongsForDisplay(songs);
+  const novas   = distinctSongs.filter(s => rehCache[activeRep+'-'+s.id] === 'nova');
+  const revisar = distinctSongs.filter(s => rehCache[activeRep+'-'+s.id] === 'ensaiar');
   
   ['ensaio-novas','ensaio-revisar'].forEach((id, i) => {
     const list  = i===0 ? novas : revisar;
@@ -9278,6 +9312,15 @@ function addCifraToRep() {
   const defaultName = _cifraResult.foundTitle || _cifraResult.query;
   const title = prompt('Nome da música:', defaultName) || defaultName;
   if (!title) return;
+  const duplicate = uniqueSongsForDisplay(songs).find(
+    s => verifiedSongTitleKey(s.title) === verifiedSongTitleKey(title)
+  );
+  if (duplicate) {
+    notify('Essa música já consta do repertório. Abrindo o cadastro existente.');
+    closeCifraSearch();
+    selectSong(duplicate.id, false);
+    return;
+  }
   
   // Transpor para tom escolhido se diferente do encontrado
   let content = _cifraResult.content;
