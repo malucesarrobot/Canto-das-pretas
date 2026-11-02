@@ -9613,6 +9613,7 @@ const VERIFIED_SONG_PATCHES = Object.create(null);
 function verifiedSongTitleKey(title) {
   return String(title || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/(\d)\.(?=\d{3}(?:\D|$))/g, '$1') // 1.800 Colinas = 1800 Colinas
     .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
