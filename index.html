@@ -1509,6 +1509,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
+/* Inicialização antecipada para impedir ReferenceError/TDZ no retorno assíncrono do Google. */
+const PERMANENT_EMAILS = new Set([
+  'anacardosocantora@gmail.com',
+  'camilaemile.samtech@gmail.com',
+  'sueli.gaspar.filha@gmail.com',
+  'dapazsempre076@gmail.com',
+  'malu.cesar@gmail.com',
+  'prof.malufc@gmail.com'
+]);
+const OWNER_EMAILS = new Set(['malu.cesar@gmail.com','prof.malufc@gmail.com']);
+const ADMIN_EMAILS = OWNER_EMAILS; // compatibilidade com funções antigas
+
 // Normaliza string para busca (remove acentos, lowercase)
 function normStr(s) {
   return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -10161,16 +10173,7 @@ db.ref('songs_override/43/content').once('value', snap => {
 // ══════════════════════════════════════════════════════════════
 // AUTENTICAÇÃO — Firebase Auth + Google Sign-In
 // ══════════════════════════════════════════════════════════════
-const PERMANENT_EMAILS = new Set([
-  'anacardosocantora@gmail.com',
-  'camilaemile.samtech@gmail.com',
-  'sueli.gaspar.filha@gmail.com',
-  'dapazsempre076@gmail.com',
-  'malu.cesar@gmail.com',
-  'prof.malufc@gmail.com'
-]);
-const OWNER_EMAILS = new Set(['malu.cesar@gmail.com','prof.malufc@gmail.com']);
-const ADMIN_EMAILS = OWNER_EMAILS; // compatibilidade com funções antigas
+/* Listas de autorização inicializadas no início do script. */
 
 let authUser = null;
 let guestsCache = {};
