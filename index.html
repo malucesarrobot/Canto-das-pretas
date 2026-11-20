@@ -10492,7 +10492,7 @@ function checkAccess(user) {
 // Não iniciar getRedirectResult na página GitHub Pages: evita ciclo de retorno OAuth.
 // Sessões já autenticadas são recuperadas por onAuthStateChanged abaixo.
 
-firebase.auth().onAuthStateChanged(user => {
+if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') firebase.auth().onAuthStateChanged(user => {
   const overlay = document.getElementById('auth-overlay');
   const loading = document.getElementById('auth-loading');
   const btn     = document.getElementById('google-signin-btn');
