@@ -8281,8 +8281,19 @@ const DISPLAY_SONG_ALIASES = {
   'o descobridor dos sete mares': 'descobridor dos sete mares'
 };
 
-function displaySongDedupKey(title) {
+function displaySongDedupKey(songOrTitle) {
+  const song = typeof songOrTitle === 'object' ? songOrTitle : null;
+  const title = song ? song.title : songOrTitle;
   const k = verifiedSongTitleKey(title);
+
+  // Correção temporária para importação antiga via API:
+  // se o cadastro veio com o artista "Diogo Nogueira" como título e a cifra
+  // contém "clareou", ele é tratado visualmente como a faixa Clareou.
+  if (song && k === 'diogo nogueira') {
+    const body = verifiedSongTitleKey(song.content || '');
+    if (body.includes('clareou')) return 'clareou';
+  }
+
   return DISPLAY_SONG_ALIASES[k] || k;
 }
 
@@ -8303,7 +8314,7 @@ function uniqueSongsForDisplay(items) {
   };
   for (const song of items) {
     if (!song || !song.title) continue;
-    const key = displaySongDedupKey(song.title);
+    const key = displaySongDedupKey(song);
     if (!key || !indices.has(key)) {
       if (key) indices.set(key, result.length);
       result.push(song);
