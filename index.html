@@ -8,9 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
   <style>
-  /* ACESSO PROVISÓRIO SHOW 20/11: repertório acessível sem login.
-     A autenticação e as permissões administrativas continuam inalteradas. */
-  #auth-overlay { display: none !important; }
+  /* Login Google obrigatório no aplicativo principal; modo-show separado para contingência. */
     /* ── AI Panel ── */
     #ai-panel { display:none; padding:8px 12px 10px; border-top:1px solid var(--border); background:rgba(0,0,0,.15); }
     #ai-panel.open { display:block; }
@@ -9180,7 +9178,7 @@ const ALL_TABS = ['rep','set','ensaio','menu']; // 4 bottom tabs
     width:     '100%',
     height:    'calc(100vh - 56px)',
     zIndex:    '150',
-    transform: 'translateX(0)',
+    transform: 'translateX(-100%)',
     transition:'transform .22s ease'
   });
   const main = document.getElementById('main');
@@ -9902,15 +9900,7 @@ db.ref('extra_songs').on('value', snap => {
 
 // ─── INICIALIZAÇÃO CONFIÁVEL (roda sincronamente no fim do body) ───
 (function initApp() {
-  // Contingência mobile: recuperar o painel mesmo quando o PWA guardou o estado anterior.
-  const side = document.getElementById('sidebar');
-  if (side) {
-    side.classList.add('open');
-    side.style.setProperty('display','flex','important');
-    side.style.setProperty('transform','translateX(0)','important');
-    side.style.setProperty('visibility','visible','important');
-    side.style.setProperty('z-index','8000','important');
-  }
+  // O painel será aberto por toggleSidebar(true), após preparar as abas.
   // Garante que tab-rep está visível dentro do sidebar
   ['rep','set','ensaio','menu'].forEach(t => {
     const el = document.getElementById('tab-'+t);
@@ -10228,7 +10218,8 @@ async function signInWithGoogle() {
   try {
     if (!window.firebase || typeof firebase.auth !== 'function') throw new Error('O serviço Google não carregou. Atualize a página.');
     const auth = firebase.auth();
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    // A persistência LOCAL é o padrão do Firebase Web Auth.
+    // Não aguardar outra Promise antes de abrir o popup: preserva o gesto do toque.
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     // O popup mantém a origem GitHub Pages e evita o loop de redirect em navegadores móveis.
@@ -10698,16 +10689,8 @@ function renderGuestList() {
           document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') reg.update().catch(() => {});
           });
-          // Se atualização assumir o controle enquanto ainda está na tela de login, carrega a versão corrigida.
-          let reloadedForUpdate = false;
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (reloadedForUpdate) return;
-            const overlay = document.getElementById('auth-overlay');
-            if (overlay && overlay.style.display !== 'none') {
-              reloadedForUpdate = true;
-              location.reload();
-            }
-          });
+          // Nunca reiniciar o aplicativo automaticamente durante login ou show.
+          // A próxima abertura incorpora a atualização.
         })
         .catch(e => console.warn('Não foi possível registrar atualização do app', e));
     });
