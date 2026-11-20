@@ -1,5 +1,5 @@
-// Canto das Pretas — Service Worker v24
-const CACHE = 'cdp-v24';
+// Canto das Pretas — Service Worker v25
+const CACHE = 'cdp-v25';
 
 const LOCAL_ASSETS = ['./', './index.html'];
 const EXTERNAL_ASSETS = [
@@ -29,7 +29,10 @@ self.addEventListener('activate', e => {
       ))
       // 2. Assume controle de todos os clientes abertos
       .then(() => self.clients.claim())
-      // 3. Novos acessos recebem a versão atual; evita ciclo de reload em PWA
+      // 3. Atualiza uma vez as janelas já abertas (inclusive app instalado) após ativação da nova versão.
+      // Executado somente na instalação desta versão do service worker; não cria loop.
+      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+      .then(clients => Promise.all(clients.map(client => client.navigate(client.url).catch(() => {}))))
   );
 });
 
