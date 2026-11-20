@@ -8276,6 +8276,16 @@ function toggleGlobalSearch() {
 
 // Deduplicação visual: não apaga registros, IDs, cifras ou marcações do Firebase.
 // A seleção prioriza o cadastro efetivamente marcado para ensaio.
+const DISPLAY_SONG_ALIASES = {
+  'meu lugar madureira': 'meu lugar',
+  'o descobridor dos sete mares': 'descobridor dos sete mares'
+};
+
+function displaySongDedupKey(title) {
+  const k = verifiedSongTitleKey(title);
+  return DISPLAY_SONG_ALIASES[k] || k;
+}
+
 function uniqueSongsForDisplay(items) {
   const result = [];
   const indices = new Map();
@@ -8293,7 +8303,7 @@ function uniqueSongsForDisplay(items) {
   };
   for (const song of items) {
     if (!song || !song.title) continue;
-    const key = verifiedSongTitleKey(song.title);
+    const key = displaySongDedupKey(song.title);
     if (!key || !indices.has(key)) {
       if (key) indices.set(key, result.length);
       result.push(song);
