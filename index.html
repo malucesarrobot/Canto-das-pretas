@@ -1090,6 +1090,8 @@
     }
     #sidebar.open {
       display: flex !important;
+      transform: translateX(0) !important;
+      visibility: visible !important;
     }
     #menu-btn { display: none; }
 
@@ -9127,6 +9129,7 @@ function _openSidebar() {
     if (main) main.style.marginLeft = '';
   }
   sb.classList.add('open');
+  sb.style.transform = 'translateX(0)';
 }
 function _closeSidebar() {
   const sb   = document.getElementById('sidebar');
