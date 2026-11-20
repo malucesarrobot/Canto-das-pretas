@@ -1520,6 +1520,10 @@ const PERMANENT_EMAILS = new Set([
 ]);
 const OWNER_EMAILS = new Set(['malu.cesar@gmail.com','prof.malufc@gmail.com']);
 const ADMIN_EMAILS = OWNER_EMAILS; // compatibilidade com funções antigas
+const DISPLAY_SONG_ALIASES = {
+  'meu lugar madureira': 'meu lugar',
+  'o descobridor dos sete mares': 'descobridor dos sete mares'
+};
 
 // Normaliza string para busca (remove acentos, lowercase)
 function normStr(s) {
@@ -8291,10 +8295,7 @@ function toggleGlobalSearch() {
 
 // Deduplicação visual: não apaga registros, IDs, cifras ou marcações do Firebase.
 // A seleção prioriza o cadastro efetivamente marcado para ensaio.
-const DISPLAY_SONG_ALIASES = {
-  'meu lugar madureira': 'meu lugar',
-  'o descobridor dos sete mares': 'descobridor dos sete mares'
-};
+/* Declaração antecipada: aliases visuais inicializados antes do catálogo. */
 
 function displaySongDedupKey(songOrTitle) {
   const song = typeof songOrTitle === 'object' ? songOrTitle : null;
