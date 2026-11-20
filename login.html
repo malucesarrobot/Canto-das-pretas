@@ -1,0 +1,23 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entrar — Canto das Pretas</title><style>body{margin:0;background:#111;color:#f5e9cf;font:16px Arial,sans-serif;min-height:100dvh;display:grid;place-items:center}.card{max-width:370px;width:calc(100% - 36px);padding:25px;background:#201b13;border:1px solid #655125;border-radius:15px;text-align:center;box-sizing:border-box}h1{font:700 27px Georgia,serif;color:#d7b35a}button,a{display:block;width:100%;box-sizing:border-box;margin-top:17px;padding:14px;border-radius:10px;font-size:16px;font-weight:bold}button{border:0;background:#f5f5f5;color:#222}a{color:#ebd39b;border:1px solid #796231;text-decoration:none;font-weight:normal}#status{min-height:25px;line-height:1.5;margin-top:20px;color:#ffd477;white-space:pre-wrap}p{line-height:1.6;color:#c5bcae}</style></head><body><main class="card"><h1>Canto das Pretas</h1><p>Entre com sua conta Google autorizada. O repertório será aberto automaticamente quando o acesso for confirmado.</p><button id="go" onclick="login()">Entrar com Google</button><div id="status" role="status"></div><a href="./index.html">Voltar ao aplicativo</a></main><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script>
+const statusEl=document.getElementById('status'),btn=document.getElementById('go');
+try{
+ firebase.initializeApp({apiKey:"AIzaSyB8XorTQASMD51JbYEXIBTW6PYeq7BGRTU",authDomain:"canto-das-pretas.firebaseapp.com",projectId:"canto-das-pretas",appId:"1:454913796929:web:44550491a32d50cc8bcfc0"});
+} catch(e){statusEl.textContent='Falha ao carregar autenticação: '+e.message}
+function login(){
+ btn.disabled=true;statusEl.textContent='Abrindo Google...';
+ try{
+  if(typeof firebase==='undefined'||!firebase.apps.length)throw Error('Serviço Google não disponível');
+  const provider=new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  firebase.auth().signInWithPopup(provider).then(result=>{
+    if(!result||!result.user)throw Error('Sessão não retornada');
+    statusEl.textContent='Autenticado. Abrindo repertório...';
+    location.replace('./index.html');
+  }).catch(e=>{
+    const code=e.code||'';
+    statusEl.textContent=code==='auth/unauthorized-domain'?'Domínio não autorizado no Firebase: malucesarrobot.github.io':code==='auth/popup-blocked'?'O navegador bloqueou a janela de login. Abra no Chrome e habilite pop-ups.':code==='auth/popup-closed-by-user'?'A seleção de conta foi interrompida. Tente novamente.':'Erro ao entrar: '+(code||e.message);
+    btn.disabled=false;
+  });
+ }catch(e){statusEl.textContent=e.message;btn.disabled=false}
+}
+</script></body></html>
