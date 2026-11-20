@@ -1,10 +1,11 @@
-// Canto das Pretas — Service Worker v23
-const CACHE = 'cdp-v23';
+// Canto das Pretas — Service Worker v24
+const CACHE = 'cdp-v24';
 
 const LOCAL_ASSETS = ['./', './index.html'];
 const EXTERNAL_ASSETS = [
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
   'https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap'
 ];
 
@@ -28,9 +29,7 @@ self.addEventListener('activate', e => {
       ))
       // 2. Assume controle de todos os clientes abertos
       .then(() => self.clients.claim())
-      // 3. Força reload em todos os apps instalados
-      .then(() => self.clients.matchAll({ type: 'window' }))
-      .then(clients => clients.forEach(client => client.navigate(client.url)))
+      // 3. Novos acessos recebem a versão atual; evita ciclo de reload em PWA
   );
 });
 
