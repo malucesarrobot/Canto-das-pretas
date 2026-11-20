@@ -10677,7 +10677,23 @@ function renderGuestList() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-        .then(reg => reg.update().catch(() => {}))
+        .then(reg => {
+          reg.update().catch(() => {});
+          // Mesmo no ícone instalado, verifica novas versões quando o app volta ao primeiro plano.
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') reg.update().catch(() => {});
+          });
+          // Se atualização assumir o controle enquanto ainda está na tela de login, carrega a versão corrigida.
+          let reloadedForUpdate = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (reloadedForUpdate) return;
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay && overlay.style.display !== 'none') {
+              reloadedForUpdate = true;
+              location.reload();
+            }
+          });
+        })
         .catch(e => console.warn('Não foi possível registrar atualização do app', e));
     });
   }
