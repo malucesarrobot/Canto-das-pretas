@@ -10210,35 +10210,39 @@ function newSessionId() {
 }
 
 // ── Login / Logout ────────────────────────────────────────────
+let googleLoginRunning = false;
 async function signInWithGoogle() {
   const btn = document.getElementById('google-signin-btn');
   const err = document.getElementById('auth-error');
+  if (googleLoginRunning) return;
+  googleLoginRunning = true;
   if (btn) btn.disabled = true;
-  if (err) err.textContent = 'Abrindo login Google...';
+  if (err) err.textContent = 'Conectando ao Google...';
   try {
-    if (!window.firebase || typeof firebase.auth !== 'function') throw new Error('O serviço Google não carregou. Atualize a página.');
-    const auth = firebase.auth();
-    // A persistência LOCAL é o padrão do Firebase Web Auth.
-    // Não aguardar outra Promise antes de abrir o popup: preserva o gesto do toque.
+    if (typeof firebase === 'undefined' || typeof firebase.auth !== 'function')
+      throw new Error('O Firebase Authentication não carregou. Abra no Chrome e tente novamente.');
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    // O popup mantém a origem GitHub Pages e evita o loop de redirect em navegadores móveis.
-    await auth.signInWithPopup(provider);
-    if (err) err.textContent = '';
-  } catch (e) {
-    console.error('Falha no login Google:', e);
+    const result = await firebase.auth().signInWithPopup(provider);
+    const user = result && result.user || firebase.auth().currentUser;
+    if (!user) throw new Error('O Google retornou sem concluir a sessão Firebase.');
+    if (err) err.textContent = 'Google conectado. Verificando autorização...';
+    checkAccess(user);
+  } catch(e) {
     const code = e.code || '';
+    console.error('Login Google:',code,e);
     if (err) err.textContent = code === 'auth/popup-blocked'
-      ? 'O navegador bloqueou a janela do Google. Permita pop-ups e toque novamente.'
-      : code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request'
-      ? 'Login não concluído. Toque novamente para entrar.'
+      ? 'Janela do Google bloqueada. Abra o site no Chrome e permita pop-ups.'
       : code === 'auth/unauthorized-domain'
-      ? 'Domínio não autorizado no Firebase: malucesarrobot.github.io'
-      : 'Falha ao entrar com Google: ' + (code || e.message || 'verifique sua conexão');
+      ? 'Domínio não autorizado. É necessário liberar malucesarrobot.github.io no Firebase Console.'
+      : code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request'
+      ? 'O Google não concluiu o login. Tente novamente pelo Chrome.'
+      : 'Login não concluído: ' + (code || e.message || 'erro desconhecido');
+  } finally {
+    googleLoginRunning = false;
     if (btn) btn.disabled = false;
   }
 }
-
 async function releaseOwnSecuritySession() {
   clearInterval(securityHeartbeat);
   securityHeartbeat = null;
@@ -10406,6 +10410,11 @@ function startOwnerSecurityPanel() {
 
 // ── Concede acesso ao app ─────────────────────────────────────
 async function grantAccess(user) {
+  if (!user || !user.uid || !firebase.auth().currentUser) {
+    const err = document.getElementById('auth-error');
+    if (err) err.textContent = 'A sessão Google não foi mantida neste navegador. Verifique o bloqueio de cookies e abra pelo Chrome.';
+    return;
+  }
   authUser = user;
   try {
     await startUniqueSecuritySession(user);
@@ -10500,10 +10509,12 @@ if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') fire
   const loading = document.getElementById('auth-loading');
   const btn     = document.getElementById('google-signin-btn');
   if (!user) {
-    // Não logado — mostra tela de login
+    // Não sobrescrever a tela durante a autenticação pop-up em andamento.
+    if (googleLoginRunning) return;
+    authUser = null;
     if (overlay) overlay.style.display = 'flex';
     if (loading) loading.style.display = 'none';
-    if (btn)     btn.style.display = 'flex';
+    if (btn) btn.style.display = 'flex';
     return;
   }
   // Logado — verifica autorização
