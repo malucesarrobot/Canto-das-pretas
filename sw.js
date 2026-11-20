@@ -1,5 +1,5 @@
-// Canto das Pretas — Service Worker v21
-const CACHE = 'cdp-v21';
+// Canto das Pretas — Service Worker v22
+const CACHE = 'cdp-v22';
 
 const LOCAL_ASSETS = ['./', './index.html'];
 const EXTERNAL_ASSETS = [
