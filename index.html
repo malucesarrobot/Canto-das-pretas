@@ -10419,13 +10419,14 @@ async function grantAccess(user) {
     return;
   }
   authUser = user;
-  try {
-    await startUniqueSecuritySession(user);
-  } catch(e) {
-    console.warn('Sessão segura indisponível:', e);
+  // Não bloquear a abertura do repertório aguardando gravação de logs no Firebase.
+  const overlay = document.getElementById('auth-overlay');
+  if (overlay) overlay.style.display = 'none';
+  Promise.resolve().then(() => startUniqueSecuritySession(user))
+    .catch(e => console.warn('Registro de acesso indisponível:', e));
+  try { if (typeof toggleSidebar === 'function') toggleSidebar(true); } catch(e) {
+    console.warn('Não foi possível abrir a lista de músicas:', e);
   }
-
-  document.getElementById('auth-overlay').style.display = 'none';
   const signOutBtn = document.getElementById('signout-btn');
   if (signOutBtn) {
     signOutBtn.style.display = 'inline-block';
