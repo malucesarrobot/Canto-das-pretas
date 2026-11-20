@@ -8827,6 +8827,46 @@ function switchRepQuiet(n) {
   });
 }
 
+function forceLiveOverrideUI() {
+  // MODO SHOW TEMPORÁRIO: qualquer música enviada toma a tela de todos.
+  globalSearchActive = false;
+
+  const gs = document.getElementById('global-search-btn');
+  if (gs) {
+    gs.classList.remove('active');
+    gs.textContent = '🌐 Buscar nos 3 repertórios';
+  }
+
+  const si = document.getElementById('search-input');
+  const kf = document.getElementById('key-filter');
+  if (si) si.value = '';
+  if (kf) kf.value = '';
+
+  try { toggleSidebar(false); } catch(e) {}
+
+  const overlay = document.getElementById('overlay');
+  if (overlay) overlay.classList.remove('show');
+
+  const cifraPanel = document.getElementById('cifra-search-panel');
+  if (cifraPanel) cifraPanel.classList.remove('open');
+
+  const wizard = document.getElementById('suggest-wizard');
+  if (wizard) wizard.classList.remove('open');
+
+  const aiModal = document.getElementById('ai-result-modal');
+  if (aiModal) aiModal.classList.remove('open');
+
+  ['modal-setlist','song-editor-modal','save-set-modal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  const welcome = document.getElementById('welcome');
+  const display = document.getElementById('song-display');
+  if (welcome) welcome.style.display = 'none';
+  if (display) display.classList.add('on');
+}
+
 function applyLiveSong(val, manual) {
   if (val === null || val === undefined) {
     if (manual) notify('Sem música');
@@ -8839,9 +8879,12 @@ function applyLiveSong(val, manual) {
 
   broadcastId = id;
   switchRepQuiet(repId);
-  document.getElementById('live-badge').classList.add('show');
+  forceLiveOverrideUI();
 
-  // Troca a cifra imediatamente; a lista lateral pode reconstruir depois.
+  const liveBadge = document.getElementById('live-badge');
+  if (liveBadge) liveBadge.classList.add('show');
+
+  // A música transmitida substitui imediatamente o que cada aparelho estava vendo.
   selectSong(id, true);
   updateBroadcastButton();
 
@@ -9817,10 +9860,16 @@ db.ref('extra_songs').on('value', snap => {
   );
   if (activeTab === 'ensaio') buildEnsaioLists();
 
-  // Se a música ao vivo chegou antes das músicas extras, completa a sincronização agora.
-  if (selectedId === null && broadcastId !== null && broadcastId !== undefined) {
+  // Se a música ao vivo chegou antes das músicas extras, ainda assim ela deve
+  // sobrepor qualquer busca ou música local assim que ficar disponível.
+  if (broadcastId !== null && broadcastId !== undefined &&
+      String(selectedId) !== String(broadcastId)) {
     const liveSong = songs.find(s => String(s.id) === String(broadcastId));
-    if (liveSong) selectSong(liveSong.id, true);
+    if (liveSong) {
+      forceLiveOverrideUI();
+      selectSong(liveSong.id, true);
+      updateBroadcastButton();
+    }
   }
 });
 
