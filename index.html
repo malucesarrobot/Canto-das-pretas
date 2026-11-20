@@ -10205,35 +10205,34 @@ function newSessionId() {
 }
 
 // ── Login / Logout ────────────────────────────────────────────
-function signInWithGoogle() {
+async function signInWithGoogle() {
   const btn = document.getElementById('google-signin-btn');
   const err = document.getElementById('auth-error');
   if (btn) btn.disabled = true;
-  if (err) err.textContent = '⏳ Iniciando...';
+  if (err) err.textContent = 'Abrindo login Google...';
   try {
-    if (typeof firebase === 'undefined') throw new Error('Firebase não carregou');
-    if (typeof firebase.auth !== 'function') throw new Error('Firebase Auth SDK não carregou — verifique conexão');
+    if (!window.firebase || typeof firebase.auth !== 'function') throw new Error('O serviço Google não carregou. Atualize a página.');
+    const auth = firebase.auth();
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    firebase.auth().signInWithPopup(provider)
-      .then(() => { if (err) err.textContent = ''; })
-      .catch(e => {
-        if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-          if (err) err.textContent = '⏳ Redirecionando...';
-          firebase.auth().signInWithRedirect(provider);
-        } else if (e.code === 'auth/unauthorized-domain') {
-          if (err) err.innerHTML = '❌ Domínio não autorizado.<br>Adicione <b>malucesarrobot.github.io</b> no Firebase Console → Authentication → Domínios autorizados.';
-          if (btn) btn.disabled = false;
-        } else {
-          if (err) err.textContent = '❌ ' + (e.code || e.message || JSON.stringify(e));
-          if (btn) btn.disabled = false;
-        }
-      });
-  } catch(e) {
-    if (err) err.textContent = '❌ ' + e.message;
+    // O popup mantém a origem GitHub Pages e evita o loop de redirect em navegadores móveis.
+    await auth.signInWithPopup(provider);
+    if (err) err.textContent = '';
+  } catch (e) {
+    console.error('Falha no login Google:', e);
+    const code = e.code || '';
+    if (err) err.textContent = code === 'auth/popup-blocked'
+      ? 'O navegador bloqueou a janela do Google. Permita pop-ups e toque novamente.'
+      : code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request'
+      ? 'Login não concluído. Toque novamente para entrar.'
+      : code === 'auth/unauthorized-domain'
+      ? 'Domínio não autorizado no Firebase: malucesarrobot.github.io'
+      : 'Falha ao entrar com Google: ' + (code || e.message || 'verifique sua conexão');
     if (btn) btn.disabled = false;
   }
 }
+
 async function releaseOwnSecuritySession() {
   clearInterval(securityHeartbeat);
   securityHeartbeat = null;
@@ -10298,62 +10297,21 @@ async function markSixReviewedAsYellow() {
 
 // ── Segurança de sessão e relatório de acessos ────────────────
 async function startUniqueSecuritySession(user) {
-  const sid = newSessionId();
-  const ref = securitySessRef.child(user.uid);
+  // Cada dispositivo pode permanecer autenticado na mesma conta durante o show.
+  // A autenticação individual continua sendo validada pelo Firebase Auth/allowlist.
+  // Não usar a chave auth/sessions/{uid} como exclusão mútua entre aparelhos.
+  clearInterval(securityHeartbeat);
+  securityHeartbeat = null;
+  activeSecuritySessionId = null;
+  activeSecuritySessionRef = null;
   const now = Date.now();
-  const record = {
-    sessionId: sid,
+  await accessLogsRef.push({
     uid: user.uid,
     email: (user.email || '').toLowerCase(),
     name: user.displayName || '',
     device: deviceLabel(),
-    startedAt: now,
-    lastSeen: now
-  };
-
-  // O login mais recente assume a conta. A sessão anterior detecta a troca e encerra.
-  await ref.set(record);
-  activeSecuritySessionId = sid;
-  activeSecuritySessionRef = ref;
-
-  accessLogsRef.push({
-    uid: user.uid,
-    email: record.email,
-    name: record.name,
-    device: record.device,
     at: now
-  }).catch(e => console.warn('Falha ao registrar acesso:', e));
-
-  ref.on('value', snap => {
-    const val = snap.val();
-    if (!authUser || authUser.uid !== user.uid) return;
-    if (val && val.sessionId && val.sessionId !== activeSecuritySessionId) {
-      clearInterval(securityHeartbeat);
-      securityHeartbeat = null;
-      firebase.auth().signOut().finally(() => {
-        const overlay = document.getElementById('auth-overlay');
-        const loading = document.getElementById('auth-loading');
-        const btn = document.getElementById('google-signin-btn');
-        const err = document.getElementById('auth-error');
-        if (overlay) overlay.style.display = 'flex';
-        if (loading) loading.style.display = 'none';
-        if (btn) btn.style.display = 'flex';
-        if (err) err.textContent = 'Este login foi aberto em outro aparelho.';
-      });
-    }
   });
-
-  clearInterval(securityHeartbeat);
-  securityHeartbeat = setInterval(async () => {
-    if (!activeSecuritySessionRef || !activeSecuritySessionId) return;
-    try {
-      const snap = await activeSecuritySessionRef.once('value');
-      const val = snap.val();
-      if (val && val.sessionId === activeSecuritySessionId) {
-        await activeSecuritySessionRef.child('lastSeen').set(Date.now());
-      }
-    } catch(e) {}
-  }, 30000);
 }
 
 async function seedAllowlistFromLegacy() {
@@ -10528,14 +10486,8 @@ function checkAccess(user) {
 
 // ── Estado de autenticação ────────────────────────────────────
 // Primeiro: verifica resultado de redirect (iOS PWA)
-firebase.auth().getRedirectResult()
-  .then(result => { /* onAuthStateChanged cuida disso */ })
-  .catch(e => {
-    if (e.code !== 'auth/no-auth-event') {
-      const err = document.getElementById('auth-error');
-      if (err) err.textContent = 'Erro: ' + e.message;
-    }
-  });
+// Não iniciar getRedirectResult na página GitHub Pages: evita ciclo de retorno OAuth.
+// Sessões já autenticadas são recuperadas por onAuthStateChanged abaixo.
 
 firebase.auth().onAuthStateChanged(user => {
   const overlay = document.getElementById('auth-overlay');
