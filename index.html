@@ -9180,7 +9180,7 @@ const ALL_TABS = ['rep','set','ensaio','menu']; // 4 bottom tabs
     width:     '100%',
     height:    'calc(100vh - 56px)',
     zIndex:    '150',
-    transform: 'translateX(-100%)',
+    transform: 'translateX(0)',
     transition:'transform .22s ease'
   });
   const main = document.getElementById('main');
@@ -9902,6 +9902,15 @@ db.ref('extra_songs').on('value', snap => {
 
 // ─── INICIALIZAÇÃO CONFIÁVEL (roda sincronamente no fim do body) ───
 (function initApp() {
+  // Contingência mobile: recuperar o painel mesmo quando o PWA guardou o estado anterior.
+  const side = document.getElementById('sidebar');
+  if (side) {
+    side.classList.add('open');
+    side.style.setProperty('display','flex','important');
+    side.style.setProperty('transform','translateX(0)','important');
+    side.style.setProperty('visibility','visible','important');
+    side.style.setProperty('z-index','8000','important');
+  }
   // Garante que tab-rep está visível dentro do sidebar
   ['rep','set','ensaio','menu'].forEach(t => {
     const el = document.getElementById('tab-'+t);
