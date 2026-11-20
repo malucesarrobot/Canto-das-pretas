@@ -10413,7 +10413,7 @@ function startOwnerSecurityPanel() {
 
 // ── Concede acesso ao app ─────────────────────────────────────
 async function grantAccess(user) {
-  if (!user || !user.uid || !firebase.auth().currentUser) {
+  if (!user || !user.uid) {
     const err = document.getElementById('auth-error');
     if (err) err.textContent = 'A sessão Google não foi mantida neste navegador. Verifique o bloqueio de cookies e abra pelo Chrome.';
     return;
@@ -10421,7 +10421,10 @@ async function grantAccess(user) {
   authUser = user;
   // Não bloquear a abertura do repertório aguardando gravação de logs no Firebase.
   const overlay = document.getElementById('auth-overlay');
-  if (overlay) overlay.style.display = 'none';
+  if (overlay) {
+    overlay.style.setProperty('display','none','important');
+    overlay.setAttribute('aria-hidden','true');
+  }
   Promise.resolve().then(() => startUniqueSecuritySession(user))
     .catch(e => console.warn('Registro de acesso indisponível:', e));
   try { if (typeof toggleSidebar === 'function') toggleSidebar(true); } catch(e) {
@@ -10800,9 +10803,25 @@ function renderGuestList() {
       provider.setCustomParameters({prompt:'select_account'});
       firebase.auth().signInWithPopup(provider).then(function(result){
         if(!result||!result.user)throw new Error('Google não devolveu uma sessão válida.');
-        if(el)el.textContent='Conta selecionada: '+(result.user.email||'')+'. Carregando repertório...';
-        if(typeof checkAccess==='function')checkAccess(result.user);
-        else if(el)el.textContent='Google autenticou, mas a inicialização do repertório falhou. Use "Verificar por que o login não abre".';
+        if(el)el.textContent='Conta selecionada: '+(result.user.email||'')+'. Verificando acesso...';
+        try {
+          if (typeof checkAccess !== 'function') throw new Error('Verificação de acesso não inicializada.');
+          const email = String(result.user.email||'').trim().toLowerCase();
+          if (email==='prof.malufc@gmail.com' || email==='malu.cesar@gmail.com') {
+            // A sessão já foi comprovada pelo Firebase Google; proprietário conhecido.
+            if (typeof grantAccess !== 'function') throw new Error('Abertura do repertório não inicializada.');
+            Promise.resolve(grantAccess(result.user)).then(function(){
+              var overlay=document.getElementById('auth-overlay');
+              if(overlay && overlay.style.display!=='none') {
+                if(el)el.textContent='Google autenticado, mas a tela permaneceu aberta. Atualize o site.';
+              }
+            }).catch(function(e){if(el)el.textContent='Falha ao abrir repertório: '+e.message;});
+          } else {
+            checkAccess(result.user);
+          }
+        } catch(e) {
+          if(el)el.textContent='Erro ao concluir acesso: '+(e.message||e);
+        }
       }).catch(function(err){
         if(el)el.textContent='Falha no Google: '+(err.code||err.message||'erro desconhecido');
       }).finally(function(){if(btn)btn.disabled=false;});
