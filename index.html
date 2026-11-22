@@ -7523,9 +7523,9 @@ function selectSong(id, fromRemote) {
    SUGGESTIONS — rotação determinística por catálogo completo
    Usar primos garante que clicar em sugestões cobre todo o catálogo sem loops
    ══════════════════════ */
-let allCatalog = uniqueSongsForDisplay(songs).map(s=>({...s,_rep:0}));
+let allCatalog = visibleRepertoireSongs(songs).map(s=>({...s,_rep:0}));
 function rebuildCatalog() {
-  allCatalog = uniqueSongsForDisplay(songs).map(s=>({...s,_rep:0}));
+  allCatalog = visibleRepertoireSongs(songs).map(s=>({...s,_rep:0}));
 }
 
 function getGlobalIdx(song) {
@@ -8375,6 +8375,20 @@ function uniqueSongsForDisplay(items) {
   return result;
 }
 
+// Regra de visibilidade: o cadastro isolado pelo nome do intérprete
+// é uma duplicata de "Clareou" em outro tom. Não remover os dados.
+function isHiddenClareouDuplicate(song) {
+  if (!song || !song.title) return false;
+  const title = verifiedSongTitleKey(song.title);
+  return title === 'xande de pilares' ||
+         title.startsWith('xande de pilares clareou') ||
+         title === 'diogo nogueira' && verifiedSongTitleKey(song.content || '').includes('clareou') ||
+         title.startsWith('diogo nogueira clareou');
+}
+function visibleRepertoireSongs(items) {
+  return uniqueSongsForDisplay(items).filter(song => !isHiddenClareouDuplicate(song));
+}
+
 function buildList(nameQ='', keyQ='') {
   // Guarda contra currentSongs inválido
   if (!currentSongs || !Array.isArray(currentSongs)) currentSongs = songs;
@@ -8394,7 +8408,7 @@ function buildList(nameQ='', keyQ='') {
         res = [...byT, ...byL];
       }
       if (lk) res = res.filter(s => String(s.key || '').toLowerCase().startsWith(lk));
-      res = uniqueSongsForDisplay(res);
+      res = visibleRepertoireSongs(res);
       if (!res.length) return;
       const hdr = document.createElement('div');
       hdr.className = 'global-result-rep';
@@ -8444,7 +8458,7 @@ function buildList(nameQ='', keyQ='') {
       .map(x=>x.s);
     if (!filtered.length) filtered = currentSongs; // show all if nothing matches
   }
-  filtered = uniqueSongsForDisplay(filtered);
+  filtered = visibleRepertoireSongs(filtered);
   if (!filtered.length) { list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.8rem;">Nenhuma música encontrada</div>'; return; }
   if (ln || lk) { filtered.forEach(s => list.appendChild(makeItem(s))); return; }
   const blocos = [...new Set(filtered.map(s=>s.bloco))];
@@ -9257,7 +9271,7 @@ function showTab(name) {
 
 // ─── ENSAIO LISTS ─────────────────────────────────────────────
 function buildEnsaioLists() {
-  const distinctSongs = uniqueSongsForDisplay(songs);
+  const distinctSongs = visibleRepertoireSongs(songs);
   const novas   = distinctSongs.filter(s => rehCache[activeRep+'-'+s.id] === 'nova');
   const revisar = distinctSongs.filter(s => rehCache[activeRep+'-'+s.id] === 'ensaiar');
   
