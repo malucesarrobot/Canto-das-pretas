@@ -8309,7 +8309,9 @@ function displaySongDedupKey(songOrTitle) {
     const body = verifiedSongTitleKey(song.content || '');
     if (body.includes('clareou')) return 'clareou';
   }
-
+  // Agrupa variações como "Clareou - Xande de Pilares" e
+  // "Clareou - Diogo Nogueira" sem mexer no registro de origem.
+  if (/^clareou(?:\s|$)/.test(k)) return 'clareou';
   return DISPLAY_SONG_ALIASES[k] || k;
 }
 
@@ -8333,8 +8335,27 @@ function uniqueSongsForDisplay(items) {
     const favorite = favCache[activeRep+'-'+id] || favCache['0-'+id] ? 1 : 0;
     const edited = songOverridesCache[id] && songOverridesCache[id].ensaioCifraRevision ? 1 : 0;
     const detailed = Math.min(String(song.content || '').trim().length, 5000);
-    return status * 10000000 + selected * 1000000 + broadcast * 100000 +
-           favorite * 10000 + edited * 6000 + detailed;
+    const title = verifiedSongTitleKey(song.title || '');
+    const artist = verifiedSongTitleKey([
+      song.artist, song.author, song.artista, song.autor, song.interprete,
+      song.performer
+    ].filter(Boolean).join(' '));
+    const isClareou = displaySongDedupKey(song) === 'clareou';
+    // Prioridade para a versão de Xande de Pilares, não a importação de Diogo.
+    // Quando o artista não está cadastrado, o título correto "Clareou"
+    // prevalece sobre o registro rotulado "Diogo Nogueira".
+    const xande = (title + ' ' + artist).includes('xande de pilares');
+    const correctTitle = title === 'clareou';
+    const isDiogo = title === 'diogo nogueira' ||
+      (title.includes('clareou') && title.includes('diogo nogueira')) ||
+      artist.includes('diogo nogueira');
+    const versionScore = isClareou
+      ? (xande ? 10000000000000 : 0) +
+        (correctTitle ? 1000000000000 : 0) +
+        (isDiogo ? -1000000000000 : 0)
+      : 0;
+    return versionScore + status * 10000000 + selected * 1000000 +
+           broadcast * 100000 + favorite * 10000 + edited * 6000 + detailed;
   };
   for (const song of items) {
     if (!song || !song.title || isLegacyClareouDiogoDuplicate(song)) continue;
