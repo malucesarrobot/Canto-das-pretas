@@ -8313,6 +8313,14 @@ function displaySongDedupKey(songOrTitle) {
   return DISPLAY_SONG_ALIASES[k] || k;
 }
 
+// Oculta apenas a duplicata antiga Diogo Nogueira / Clareou.
+function isLegacyClareouDiogoDuplicate(song) {
+  if (!song || !song._extra) return false;
+  const title = verifiedSongTitleKey(song.title || '');
+  const content = verifiedSongTitleKey(song.content || '');
+  return (title === 'diogo nogueira' && content.includes('clareou')) ||
+    (title.includes('clareou') && title.includes('diogo nogueira'));
+}
 function uniqueSongsForDisplay(items) {
   const result = [];
   const indices = new Map();
@@ -8329,7 +8337,7 @@ function uniqueSongsForDisplay(items) {
            favorite * 10000 + edited * 6000 + detailed;
   };
   for (const song of items) {
-    if (!song || !song.title) continue;
+    if (!song || !song.title || isLegacyClareouDiogoDuplicate(song)) continue;
     const key = displaySongDedupKey(song);
     if (!key || !indices.has(key)) {
       if (key) indices.set(key, result.length);
