@@ -8359,6 +8359,10 @@ function uniqueSongsForDisplay(items) {
   };
   for (const song of items) {
     if (!song || !song.title || isLegacyClareouDiogoDuplicate(song)) continue;
+    // Registro duplicado confirmado pela banda: o cadastro intitulado
+    // "Xande de Pilares" é a mesma faixa "Clareou" em outro tom.
+    // Ocultar só na interface; preservar integralmente no Firebase.
+    if (verifiedSongTitleKey(song.title) === 'xande de pilares') continue;
     const key = displaySongDedupKey(song);
     if (!key || !indices.has(key)) {
       if (key) indices.set(key, result.length);
